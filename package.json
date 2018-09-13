@@ -1,0 +1,26 @@
+{
+  "name": "grandiose",
+  "version": "0.0.1",
+  "description": "Node.JS native bindings to the Newtek NDI SDK.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Streampunk/grandiose.git"
+  },
+  "keywords": [
+    "Newtek",
+    "NDI",
+    "network",
+    "device",
+    "interface"
+  ],
+  "author": "Streampunk Media <furnace@streampunk.media> (http://www.streampunk.media)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Streampunk/grandiose/issues"
+  },
+  "homepage": "https://github.com/Streampunk/grandiose#readme"
+}
