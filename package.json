@@ -22,5 +22,12 @@
   "bugs": {
     "url": "https://github.com/Streampunk/grandiose/issues"
   },
-  "homepage": "https://github.com/Streampunk/grandiose#readme"
+  "homepage": "https://github.com/Streampunk/grandiose#readme",
+  "gypfile": true,
+  "dependencies": {
+    "bindings": "^1.3.0"
+  },
+  "devDependencies": {
+    "segfault-handler": "^1.0.0"
+  }
 }
