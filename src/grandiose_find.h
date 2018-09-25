@@ -17,7 +17,17 @@
 #define GRANDIOSE_FIND_H
 
 #include "node_api.h"
+#include "grandiose_util.h"
 
 napi_value find(napi_env env, napi_callback_info info);
+
+struct findCarrier : carrier {
+  uint32_t wait = 10000;
+  NDIlib_find_instance_t find;
+  uint32_t no_sources = 0;
+  const NDIlib_source_t* sources;
+};
+
+#define GRANDIOSE_NOT_FOUND 404
 
 #endif /* GRANDIOSE_FIND_H */

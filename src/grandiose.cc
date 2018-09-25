@@ -34,6 +34,12 @@
 napi_value version(napi_env env, napi_callback_info info) {
   napi_status status;
 
+  napi_value args[10];
+  size_t argc = 10;
+  status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+  CHECK_STATUS;
+  printf("I've got %i args.\n", argc);
+
   const char* ndiVersion = NDIlib_version();
   napi_value result;
   status = napi_create_string_utf8(env, ndiVersion, NAPI_AUTO_LENGTH, &result);
