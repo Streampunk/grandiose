@@ -4,6 +4,9 @@
       "target_name": "grandiose",
       "sources": [
         "src/grandiose_util.cc",
+        "src/grandiose_find.cc",
+        "src/grandiose_send.cc",
+        "src/grandiose_receive.cc",
         "src/grandiose.cc"
       ],
       "include_dirs": [ "include" ],
