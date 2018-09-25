@@ -1,0 +1,124 @@
+const grandiose = require('grandiose');
+
+# Find
+
+let sources = await grandiose.find(<args>, <max_wait>);
+
+<args> is {
+  showLocalSources: <boolean>,
+  groups: <string> or <array<string>>,
+  extraIPs: <string> or <array<string>>
+}
+<max_wait> is number of milliseconds to wait before failing
+
+sources is an <array<source>> where source is {
+  name: <string>,
+  urlAddress: <string>,
+  embedded: <native<NDIlib_source_t>>
+}
+
+# Receive
+
+let receiver = grandiose.receive(<args>);
+
+<args> is {
+  source: <source>,
+  colorFormat: <enum<COLOR_FORMAT_*>>,
+  bandwidth <enum<BANDWIDth_*>>,
+  allowVideoFields: <boolean> = true,
+  name: <string> = nullptr
+};
+
+receiver is {
+  settings: <args>,
+  embedded: <native<NDIlib_recv_instance_t>>,
+  video: <fn<Promise<video>>>,
+  audio: <fn<Promise<audio>>>,
+  metadata: <fn<Promise<metadata>>>,
+  data: <fn<Promise<data>>>
+}
+
+let video = await receiver.video();
+
+video is {
+  type: 'video',
+  width: <int>,
+  height: <int>,
+  fourcc: <string>, // define constants FOURCC_TYPE_*
+  frameRate: <array<int>>,
+  aspectRatio: <number>,
+  formatType: <enum<FRAME_FORMAT_*>>,
+  lineStrideBytes: <int>,
+  timecode: <int>,
+  data: <Buffer>,
+  metadata: <string>,
+  timestamp: <int> or <undefined>
+}
+
+let audio = await receiver.audio();
+
+audio is {
+  type: 'audio',
+  sampleRate: <int>,
+  channels: <int>,
+  samples: <int>,
+  timecode: <int>,
+  data: <Buffer>,
+  channelStrideBytes: <int>,
+  metadata: <string>,
+  timestamp: <int> or <undefined>
+}
+
+let metadata = await receiver.metadata();
+
+metadata is {
+  type: 'metadata',
+  timecode: <int>,
+  data: <string>
+}
+
+let data = await receiver.data(); // Whatever comes next
+
+data is one of type video, audio or data, whatever comes next. Also, tally and
+change.
+
+tally is {
+  type: 'tally',
+  onProgram: <boolean> = false,
+  onPreview: <boolean> = false
+}
+
+change is {
+  type: 'change'
+}
+
+# send
+
+let sender = grandiose.send(<args>);
+
+<args> is {
+  name: <string>,
+  groups: <string> or <array<string>> = nullptr,
+  clockVideo: <boolean> = true,
+  clockAudio: <boolean> = false
+};
+
+<sender> is {
+  settings: <args>,
+  embedded: <native<NDIlib_send_instance_t>>
+}
+
+await sender.send({
+  type: 'audio',
+  ...
+});
+
+await sender.send({
+  type: 'video',
+  ...
+});
+
+await sender.send({
+  type: 'metadata',
+  ...
+});

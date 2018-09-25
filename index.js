@@ -15,8 +15,8 @@
 
 const addon = require('bindings')('grandiose');
 
-const SegfaultHandler = require('segfault-handler');
-SegfaultHandler.registerHandler("crash.log"); // With no argument, SegfaultHandler will generate a generic log file name
+// const SegfaultHandler = require('segfault-handler');
+// SegfaultHandler.registerHandler("crash.log"); // With no argument, SegfaultHandler will generate a generic log file name
 
 let find = function (args) {
   if (args == undefined) return addon.find();
@@ -32,5 +32,7 @@ let find = function (args) {
 module.exports = {
   version: addon.version,
   find: find,
-  isSupportedCPU: addon.isSupportedCPU
+  isSupportedCPU: addon.isSupportedCPU,
+  receive: addon.receive,
+  send: addon.send
 };
