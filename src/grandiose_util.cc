@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <chrono>
+#include <Processing.NDI.Lib.h>
 #include "grandiose_util.h"
 #include "node_api.h"
 
@@ -135,4 +136,32 @@ int32_t rejectStatus(napi_env env, carrier* c, char* file, int32_t line) {
     tidyCarrier(env, c);
   }
   return c->status;
+}
+
+bool validColorFormat(NDIlib_recv_color_format_e format) {
+  switch (format) {
+    case NDIlib_recv_color_format_BGRX_BGRA:
+    case NDIlib_recv_color_format_UYVY_BGRA:
+    case NDIlib_recv_color_format_RGBX_RGBA:
+    case NDIlib_recv_color_format_UYVY_RGBA:
+    case NDIlib_recv_color_format_fastest:
+  #ifdef _WIN32
+    case 	NDIlib_recv_color_format_BGRX_BGRA_flipped:
+  #endif
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool validBandwidth(NDIlib_recv_bandwidth_e bandwidth) {
+  switch (bandwidth) {
+    case NDIlib_recv_bandwidth_metadata_only:
+    case NDIlib_recv_bandwidth_audio_only:
+    case NDIlib_recv_bandwidth_lowest:
+    case NDIlib_recv_bandwidth_highest:
+      return true;
+    default:
+      return false;
+  }
 }

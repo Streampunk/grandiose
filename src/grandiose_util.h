@@ -19,6 +19,7 @@
 #include <chrono>
 #include <stdio.h>
 #include <string>
+#include <Processing.NDI.Lib.h>
 #include "node_api.h"
 
 #define DECLARE_NAPI_METHOD(name, func) { name, 0, func, 0, 0, 0, napi_default, 0 }
@@ -71,5 +72,8 @@ int32_t rejectStatus(napi_env env, carrier* c, char* file, int32_t line);
   napi_throw_error(env, nullptr, errorMsg); \
   return nullptr; \
 }
+
+bool validColorFormat(NDIlib_recv_color_format_e format);
+bool validBandwidth(NDIlib_recv_bandwidth_e bandwidth);
 
 #endif // GRANDIOSE_UTIL_H

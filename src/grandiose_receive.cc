@@ -43,12 +43,13 @@ napi_value receive(napi_env env, napi_callback_info info) {
   napi_valuetype type;
   receiveCarrier* carrier = new receiveCarrier;
 
+  size_t argc = 1;
   napi_value args[1];
-  size_t argc;
   status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   CHECK_STATUS;
-  if (argc != 1)
-    NAPI_THROW_ERROR("Receiver must be created with an object containing at least a 'source' property.");
+  printf("I've got %i args.\n", argc);
+
+  if (argc != (size_t) 1) NAPI_THROW_ERROR("Receiver must be created with an object containing at least a 'source' property.");
 
   status = napi_typeof(env, args[0], &type);
   CHECK_STATUS;
@@ -62,9 +63,90 @@ napi_value receive(napi_env env, napi_callback_info info) {
   napi_value source, colorFormat, bandwidth, allowVideoFields, name;
   // source is an object, not an array, with name and urlAddress
   // convert to a native source
+  status = napi_get_named_property(env, config, "source", &source);
+  printf("Status is %i.\n", status);
+  CHECK_STATUS;
+  status = napi_typeof(env, source, &type);
+  CHECK_STATUS;
+  status = napi_is_array(env, source, &isArray);
+  CHECK_STATUS;
+  if ((type != napi_object) || isArray) NAPI_THROW_ERROR("Source property must be an object and not an array.");
+
+  napi_value checkType;
+  status = napi_get_named_property(env, source, "name", &checkType);
+  CHECK_STATUS;
+  status = napi_typeof(env, checkType, &type);
+  CHECK_STATUS;
+  if (type != napi_string) NAPI_THROW_ERROR("Source property must have a 'name' sub-property that is of type string.");
+  status = napi_get_named_property(env, source, "urlAddress", &checkType);
+  CHECK_STATUS;
+  status = napi_typeof(env, checkType, &type);
+  CHECK_STATUS;
+  if (type != napi_string) NAPI_THROW_ERROR("Source property must have a 'urlAddress' sub-property that is of type string.");
+
+  carrier->source = new NDIlib_source_t();
+  status = makeNativeSource(env, source, carrier->source);
+  CHECK_STATUS;
+
+  status = napi_get_named_property(env, config, "colorFormat", &colorFormat);
+  CHECK_STATUS;
+  status = napi_typeof(env, colorFormat, &type);
+  CHECK_STATUS;
+  if (type != napi_undefined) {
+    if (type != napi_number) NAPI_THROW_ERROR("Color format property must be a number.");
+    int32_t enumValue;
+    status = napi_get_value_int32(env, colorFormat, &enumValue);
+    CHECK_STATUS;
+
+    carrier->colorFormat = (NDIlib_recv_color_format_e) enumValue;
+    if (!validColorFormat(carrier->colorFormat)) NAPI_THROW_ERROR("Invalid colour format value.");
+  }
+
+  status = napi_get_named_property(env, config, "bandwidth", &bandwidth);
+  CHECK_STATUS;
+  status = napi_typeof(env, bandwidth, &type);
+  CHECK_STATUS;
+  if (type != napi_undefined) {
+    if (type != napi_number) NAPI_THROW_ERROR("Bandwidth property must be a number.");
+    int32_t enumValue;
+    status = napi_get_value_int32(env, bandwidth, &enumValue);
+    CHECK_STATUS;
+
+    carrier->bandwidth = (NDIlib_recv_bandwidth_e) enumValue;
+    if (!validBandwidth(carrier->bandwidth)) NAPI_THROW_ERROR("Invalid bandwidth value.");
+  }
+
+  status = napi_get_named_property(env, config, "allowVideoFields", &allowVideoFields);
+  CHECK_STATUS;
+  status = napi_typeof(env, allowVideoFields, &type);
+  CHECK_STATUS;
+  if (type != napi_undefined) {
+    if (type != napi_boolean) NAPI_THROW_ERROR("Allow video fields property must be a Boolean.");
+    status = napi_get_value_bool(env, allowVideoFields, &carrier->allowVideoFields);
+    CHECK_STATUS;
+  }
+
+  status = napi_get_named_property(env, config, "name", &name);
+  CHECK_STATUS;
+  status = napi_typeof(env, name, &type);
+  if (type != napi_undefined) {
+    if (type != napi_string) NAPI_THROW_ERROR("Optional name property must be a string when present.");
+    size_t namel;
+    status = napi_get_value_string_utf8(env, name, nullptr, 0, &namel);
+    CHECK_STATUS;
+    carrier->name = (char *) malloc(namel + 1);
+    status = napi_get_value_string_utf8(env, name, carrier->name, namel + 1, &namel);
+    CHECK_STATUS;
+  }
+
+  napi_value promise;
+  status = napi_create_promise(env, &carrier->_deferred, &promise);
+  CHECK_STATUS;
+
+  return promise;
 }
 
-napi_value receive_old(napi_env env, napi_callback_info info) {
+/* napi_value receive_old(napi_env env, napi_callback_info info) {
   napi_status status;
   napi_value result;
 
@@ -81,7 +163,7 @@ napi_value receive_old(napi_env env, napi_callback_info info) {
 	while ((!no_sources) || (count++ < 10))
 	{	// Wait until the sources on the nwtork have changed
 		printf("Looking for sources ...\n");
-		NDIlib_find_wait_for_sources(pNDI_find, 5000/* One second */);
+		NDIlib_find_wait_for_sources(pNDI_find, 5000);
 		p_sources = NDIlib_find_get_current_sources(pNDI_find, &no_sources);
     printf("Found %u sources, first is %s.\n", no_sources, p_sources[0].p_ndi_name);
 	}
@@ -140,4 +222,4 @@ napi_value receive_old(napi_env env, napi_callback_info info) {
   CHECK_STATUS;
 
   return result;
-}
+} */

@@ -47,12 +47,22 @@ let find = function (...args) {
   return addon.find.apply(null, args);
 }
 
+function promiseWrap (p) {
+  return function (...args) {
+    try {
+      return p.apply(null, args);
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+}
+
 module.exports = {
   version: addon.version,
-  find: find,
+  find: promiseWrap(find),
   isSupportedCPU: addon.isSupportedCPU,
-  receive: addon.receive,
-  send: addon.send,
+  receive: promiseWrap(addon.receive),
+  send: promiseWrap(addon.send),
   COLOR_FORMAT_BGRX_BGRA, COLOR_FORMAT_UYVY_BGRA,
   COLOR_FORMAT_RGBX_RGBA, COLOR_FORMAT_UYVY_RGBA,
   COLOR_FORMAT_BGRX_BGRA_FLIPPED, COLOR_FORMAT_FASTEST,

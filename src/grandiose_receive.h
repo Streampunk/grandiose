@@ -23,6 +23,9 @@ napi_value receive(napi_env env, napi_callback_info info);
 
 struct receiveCarrier : carrier {
   NDIlib_source_t* source;
+  NDIlib_recv_color_format_e colorFormat = NDIlib_recv_color_format_fastest;
+  NDIlib_recv_bandwidth_e bandwidth = NDIlib_recv_bandwidth_highest;
+  bool allowVideoFields = true;
   char* name = nullptr;
   ~receiveCarrier() {
     free(name);
