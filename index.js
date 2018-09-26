@@ -18,6 +18,24 @@ const addon = require('bindings')('grandiose');
 const SegfaultHandler = require('segfault-handler');
 SegfaultHandler.registerHandler("crash.log"); // With no argument, SegfaultHandler will generate a generic log file name
 
+const COLOR_FORMAT_BGRX_BGRA = 0; // No alpha channel: BGRX, Alpha channel: BGRA
+const COLOR_FORMAT_UYVY_BGRA = 1; // No alpha channel: UYVY, Alpha channel: BGRA
+const COLOR_FORMAT_RGBX_RGBA = 2; // No alpha channel: RGBX, Alpha channel: RGBA
+const COLOR_FORMAT_UYVY_RGBA = 3; // No alpha channel: UYVY, Alpha channel: RGBA
+
+// On Windows there are some APIs that require bottom to top images in RGBA format. Specifying
+// this format will return images in this format. The image data pointer will still point to the
+// "top" of the image, althought he stride will be negative. You can get the "bottom" line of the image
+// using : video_data.p_data + (video_data.yres - 1)*video_data.line_stride_in_bytes
+const COLOR_FORMAT_BGRX_BGRA_FLIPPED = 200;
+
+const COLOR_FORMAT_FASTEST = 100;
+
+const BANDWIDTH_METADATA_ONLY = -10; // Receive metadata.
+const BANDWIDTH_AUDIO_ONLY    =  10; // Receive metadata, audio.
+const BANDWIDTH_LOWEST        =  0; // Receive metadata, audio, video at a lower bandwidth and resolution.
+const BANDWIDTH_HIGHEST       =  100; // Receive metadata, audio, video at full resolution.
+
 let find = function (...args) {
   if (args.length === 0) return addon.find();
   if (Array.isArray(args[0].groups)) {
@@ -34,5 +52,10 @@ module.exports = {
   find: find,
   isSupportedCPU: addon.isSupportedCPU,
   receive: addon.receive,
-  send: addon.send
+  send: addon.send,
+  COLOR_FORMAT_BGRX_BGRA, COLOR_FORMAT_UYVY_BGRA,
+  COLOR_FORMAT_RGBX_RGBA, COLOR_FORMAT_UYVY_RGBA,
+  COLOR_FORMAT_BGRX_BGRA_FLIPPED, COLOR_FORMAT_FASTEST,
+  BANDWIDTH_METADATA_ONLY, BANDWIDTH_AUDIO_ONLY,
+  BANDWIDTH_LOWEST, BANDWIDTH_HIGHEST
 };

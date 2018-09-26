@@ -44,10 +44,6 @@ void findExecute(napi_env env, void* data) {
   }
 }
 
-#define REJECT_CLEAN \
-if (c->status != GRANDIOSE_SUCCESS) NDIlib_find_destroy(c->find); \
-REJECT_STATUS;
-
 void findComplete(napi_env env, napi_status asyncStatus, void* data) {
   findCarrier* c = (findCarrier*) data;
 
@@ -55,40 +51,33 @@ void findComplete(napi_env env, napi_status asyncStatus, void* data) {
     c->status = asyncStatus;
     c->errorMsg = "Async context creation failed to complete.";
   }
-  REJECT_CLEAN;
+  REJECT_STATUS;
 
   napi_value result;
   c->status = napi_create_array(env, &result);
-  REJECT_CLEAN;
+  REJECT_STATUS;
   napi_value item;
   for ( uint32_t i = 0 ; i < c->no_sources; i++ ) {
     napi_value name, uri;
     c->status = napi_create_string_utf8(env, c->sources[i].p_ndi_name, NAPI_AUTO_LENGTH, &name);
-    REJECT_CLEAN;
+    REJECT_STATUS;
     c->status = napi_create_string_utf8(env, c->sources[i].p_url_address, NAPI_AUTO_LENGTH, &uri);
-    REJECT_CLEAN;
+    REJECT_STATUS;
     c->status = napi_create_object(env, &item);
-    REJECT_CLEAN;
+    REJECT_STATUS;
     c->status = napi_set_named_property(env, item, "name", name);
-    REJECT_CLEAN;
+    REJECT_STATUS;
     c->status = napi_set_named_property(env, item, "urlAddress", uri);
-    REJECT_CLEAN;
+    REJECT_STATUS;
 
     c->status = napi_set_element(env, result, i, item);
-    REJECT_CLEAN;
+    REJECT_STATUS;
   }
 
   napi_status status;
   status = napi_resolve_deferred(env, c->_deferred, result);
   FLOATING_STATUS;
 
-  NDIlib_find_destroy(c->find);
-
-  NDIlib_source_t* fred = new NDIlib_source_t();
-  c->status = makeNativeSource(env, item, fred);
-  REJECT_STATUS;
-  printf("I made name=%s and urlAddress=%s\n", fred->p_ndi_name, fred->p_url_address);
-  delete fred;
   tidyCarrier(env, c);
 }
 

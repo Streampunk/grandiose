@@ -26,8 +26,45 @@
 
 #include "grandiose_receive.h"
 #include "grandiose_util.h"
+#include "grandiose_find.h"
+
+void receiveExecute(napi_env env, void* data) {
+  receiveCarrier* c = (receiveCarrier*) data;
+
+}
+
+void receiveComplete(napi_env env, napi_status asyncStatus, void* data) {
+  receiveCarrier* C = (receiveCarrier*) data;
+
+}
 
 napi_value receive(napi_env env, napi_callback_info info) {
+  napi_status status;
+  napi_valuetype type;
+  receiveCarrier* carrier = new receiveCarrier;
+
+  napi_value args[1];
+  size_t argc;
+  status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+  CHECK_STATUS;
+  if (argc != 1)
+    NAPI_THROW_ERROR("Receiver must be created with an object containing at least a 'source' property.");
+
+  status = napi_typeof(env, args[0], &type);
+  CHECK_STATUS;
+  bool isArray;
+  status = napi_is_array(env, args[0], &isArray);
+  CHECK_STATUS;
+  if ((type != napi_object) || isArray)
+    NAPI_THROW_ERROR("Single argument must be an object, not an array, containing at least a 'source' property.");
+
+  napi_value config = args[0];
+  napi_value source, colorFormat, bandwidth, allowVideoFields, name;
+  // source is an object, not an array, with name and urlAddress
+  // convert to a native source
+}
+
+napi_value receive_old(napi_env env, napi_callback_info info) {
   napi_status status;
   napi_value result;
 

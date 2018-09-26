@@ -17,7 +17,17 @@
 #define GRANDIOSE_RECEIVE_H
 
 #include "node_api.h"
+#include "grandiose_util.h"
 
 napi_value receive(napi_env env, napi_callback_info info);
+
+struct receiveCarrier : carrier {
+  NDIlib_source_t* source;
+  char* name = nullptr;
+  ~receiveCarrier() {
+    free(name);
+    delete source;
+  }
+};
 
 #endif /* GRANDIOSE_RECEIVE_H */

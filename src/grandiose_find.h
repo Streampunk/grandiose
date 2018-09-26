@@ -28,6 +28,10 @@ struct findCarrier : carrier {
   NDIlib_find_instance_t find;
   uint32_t no_sources = 0;
   const NDIlib_source_t* sources;
+  ~findCarrier() {
+    printf("Destroying find carrier.\n");
+    NDIlib_find_destroy(find);
+  };
 };
 
 #define GRANDIOSE_NOT_FOUND 404
