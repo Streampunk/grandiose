@@ -18,8 +18,10 @@
 
 #include "node_api.h"
 #include "grandiose_util.h"
+#include <Processing.NDI.Lib.h>
 
 napi_value find(napi_env env, napi_callback_info info);
+napi_status makeNativeSource(napi_env env, napi_value source, NDIlib_source_t *result);
 
 struct findCarrier : carrier {
   uint32_t wait = 10000;
