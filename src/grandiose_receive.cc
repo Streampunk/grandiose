@@ -30,7 +30,7 @@
 
 void finalizeReceive(napi_env env, void* data, void* hint) {
   printf("Releasing receiver.\n");
-  NDIlib_recv_destroy((NDIlib_recv_instance_t) data);
+  // NDIlib_recv_destroy((NDIlib_recv_instance_t) data);
 }
 
 void finalizeVideo(napi_env env, void* data, void* hint) {
