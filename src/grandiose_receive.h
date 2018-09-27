@@ -20,6 +20,7 @@
 #include "grandiose_util.h"
 
 napi_value receive(napi_env env, napi_callback_info info);
+napi_value videoReceive(napi_env env, napi_callback_info info);
 
 struct receiveCarrier : carrier {
   NDIlib_source_t* source;
@@ -27,10 +28,36 @@ struct receiveCarrier : carrier {
   NDIlib_recv_bandwidth_e bandwidth = NDIlib_recv_bandwidth_highest;
   bool allowVideoFields = true;
   char* name = nullptr;
+  NDIlib_recv_instance_t recv;
   ~receiveCarrier() {
     free(name);
     delete source;
   }
+};
+
+struct videoCarrier : carrier {
+  uint32_t wait = 10000;
+  NDIlib_recv_instance_t recv;
+  NDIlib_video_frame_v2_t videoFrame;
+  ~videoCarrier() {}
+};
+
+struct audioCarrier : carrier {
+  uint32_t wait = 10000;
+  NDIlib_recv_instance_t recv;
+  ~audioCarrier() {}
+};
+
+struct metadataCarrier : carrier {
+  uint32_t wait = 10000;
+  NDIlib_recv_instance_t recv;
+  ~metadataCarrier() {}
+};
+
+struct dataCarrier : carrier {
+  uint32_t wait = 10000;
+  NDIlib_recv_instance_t recv;
+  ~dataCarrier() {}
 };
 
 #endif /* GRANDIOSE_RECEIVE_H */

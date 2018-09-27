@@ -42,6 +42,7 @@ void findExecute(napi_env env, void* data) {
       "Did not find any NDI streams in the given wait time of " +
       std::to_string(c->wait) + "ms.";
   }
+
 }
 
 void findComplete(napi_env env, napi_status asyncStatus, void* data) {
@@ -49,7 +50,7 @@ void findComplete(napi_env env, napi_status asyncStatus, void* data) {
 
   if (asyncStatus != napi_ok) {
     c->status = asyncStatus;
-    c->errorMsg = "Async context creation failed to complete.";
+    c->errorMsg = "Async finder failed to complete.";
   }
   REJECT_STATUS;
 

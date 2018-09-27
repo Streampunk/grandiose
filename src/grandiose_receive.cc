@@ -28,14 +28,69 @@
 #include "grandiose_util.h"
 #include "grandiose_find.h"
 
+void finalizeReceive(napi_env env, void* data, void* hint) {
+  printf("Releasing receiver.\n");
+  NDIlib_recv_destroy((NDIlib_recv_instance_t) data);
+}
+
+void finalizeVideo(napi_env env, void* data, void* hint) {
+  printf("Releasing video frame.\n");
+  NDIlib_recv_free_video_v2((NDIlib_recv_instance_t) hint, (NDIlib_video_frame_v2_t*) data);
+}
+
 void receiveExecute(napi_env env, void* data) {
   receiveCarrier* c = (receiveCarrier*) data;
 
+  NDIlib_recv_create_v3_t receiveConfig;
+  receiveConfig.source_to_connect_to = *c->source;
+  receiveConfig.color_format = c->colorFormat;
+  receiveConfig.bandwidth = c->bandwidth;
+  receiveConfig.allow_video_fields = c->allowVideoFields;
+  receiveConfig.p_ndi_name = c->name;
+
+  c->recv = NDIlib_recv_create_v3(&receiveConfig);
+  if (!c->recv) {
+    c->status = GRANDIOSE_RECEIVE_CREATE_FAIL;
+    c->errorMsg = "Failed to create NDI receiver.";
+    return;
+  }
+
+  NDIlib_recv_connect(c->recv, c->source);
 }
 
 void receiveComplete(napi_env env, napi_status asyncStatus, void* data) {
-  receiveCarrier* C = (receiveCarrier*) data;
+  receiveCarrier* c = (receiveCarrier*) data;
 
+  printf("Completing some receive creation work.\n");
+
+  if (asyncStatus != napi_ok) {
+    c->status = asyncStatus;
+    c->errorMsg = "Async receiver creation failed to complete.";
+  }
+  REJECT_STATUS;
+
+  napi_value result;
+  c->status = napi_create_object(env, &result);
+  REJECT_STATUS;
+
+  napi_value embedded;
+  c->status = napi_create_external(env, c->recv, finalizeReceive, nullptr, &embedded);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "embedded", embedded);
+  REJECT_STATUS;
+
+  napi_value videoFn;
+  c->status = napi_create_function(env, "video", NAPI_AUTO_LENGTH, videoReceive,
+    nullptr, &videoFn);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "video", videoFn);
+  REJECT_STATUS;
+
+  napi_status status;
+  status = napi_resolve_deferred(env, c->_deferred, result);
+  FLOATING_STATUS;
+
+  tidyCarrier(env, c);
 }
 
 napi_value receive(napi_env env, napi_callback_info info) {
@@ -143,7 +198,146 @@ napi_value receive(napi_env env, napi_callback_info info) {
   status = napi_create_promise(env, &carrier->_deferred, &promise);
   CHECK_STATUS;
 
+  napi_value resource_name;
+  status = napi_create_string_utf8(env, "Receive", NAPI_AUTO_LENGTH, &resource_name);
+  CHECK_STATUS;
+  status = napi_create_async_work(env, NULL, resource_name, receiveExecute,
+    receiveComplete, carrier, &carrier->_request);
+  CHECK_STATUS;
+  status = napi_queue_async_work(env, carrier->_request);
+  CHECK_STATUS;
+
   return promise;
+}
+
+void videoReceiveExecute(napi_env env, void* data) {
+  videoCarrier* c = (videoCarrier*) data;
+
+  switch (NDIlib_recv_capture_v2(c->recv, &c->videoFrame, nullptr, nullptr, c->wait))
+  {
+    case NDIlib_frame_type_none:
+      printf("No data received.\n");
+      break;
+
+    // Video data
+    case NDIlib_frame_type_video:
+      printf("Video data received (%dx%d at %d/%d).\n", c->videoFrame.xres, c->videoFrame.yres,
+        c->videoFrame.frame_rate_N, c->videoFrame.frame_rate_D);
+      break;
+
+    default:
+      printf("Other kind of data received.\n");
+      break;
+  }
+
+}
+
+void videoReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
+  videoCarrier* c = (videoCarrier*) data;
+
+  printf("Video receive completed.\n");
+
+  if (asyncStatus != napi_ok) {
+    c->status = asyncStatus;
+    c->errorMsg = "Async video frame receive failed to complete.";
+  }
+  REJECT_STATUS;
+
+  napi_value result;
+  c->status = napi_create_object(env, &result);
+  REJECT_STATUS;
+
+  napi_value embedded;
+  c->status = napi_create_external(env, &c->videoFrame, finalizeVideo, c->recv, &embedded);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "embedded", embedded);
+  REJECT_STATUS;
+
+  napi_status status;
+  status = napi_resolve_deferred(env, c->_deferred, result);
+  FLOATING_STATUS;
+
+  tidyCarrier(env, c);
+}
+
+napi_value videoReceive(napi_env env, napi_callback_info info) {
+  napi_status status;
+  napi_valuetype type;
+  videoCarrier* carrier = new videoCarrier;
+
+  size_t argc = 1;
+  napi_value args[1];
+  napi_value thisValue;
+  status = napi_get_cb_info(env, info, &argc, args, &thisValue, nullptr);
+  CHECK_STATUS;
+
+  napi_value recvValue;
+  status = napi_get_named_property(env, thisValue, "embedded", &recvValue);
+  CHECK_STATUS;
+  void* recvData;
+  status = napi_get_value_external(env, recvValue, &recvData);
+  carrier->recv = (NDIlib_recv_instance_t) recvData;
+  CHECK_STATUS;
+
+  if (argc >= 1) {
+    status = napi_typeof(env, args[0], &type);
+    CHECK_STATUS;
+    if (type == napi_number) {
+      status = napi_get_value_uint32(env, args[0], &carrier->wait);
+      CHECK_STATUS;
+    }
+  }
+
+  napi_value promise;
+  status = napi_create_promise(env, &carrier->_deferred, &promise);
+  CHECK_STATUS;
+
+  napi_value resource_name;
+  status = napi_create_string_utf8(env, "VideoReceive", NAPI_AUTO_LENGTH, &resource_name);
+  CHECK_STATUS;
+  status = napi_create_async_work(env, NULL, resource_name, videoReceiveExecute,
+    videoReceiveComplete, carrier, &carrier->_request);
+  CHECK_STATUS;
+  status = napi_queue_async_work(env, carrier->_request);
+  CHECK_STATUS;
+
+  return promise;
+}
+
+void audioReceiveExecute(napi_env env, void* data) {
+
+}
+
+void audioReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
+
+}
+
+napi_value audioReceive(napi_env env, napi_callback_info info) {
+
+}
+
+void metadataReceiveExecute(napi_env env, void* data) {
+
+}
+
+void metadataReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
+
+}
+
+napi_value metadataReceive(napi_env env, napi_callback_info info) {
+
+}
+
+void dataReceiveExecute(napi_env env, void* data) {
+
+}
+
+void dataReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
+
+}
+
+napi_value dataReceive(napi_env env, napi_callback_info info) {
+
 }
 
 /* napi_value receive_old(napi_env env, napi_callback_info info) {

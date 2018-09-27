@@ -24,7 +24,7 @@ let receiver = grandiose.receive(<args>);
 <args> is {
   source: <source>,
   colorFormat: <enum<COLOR_FORMAT_*>> = COLOR_FORMAT_FASTEST,
-  bandwidth <enum<BANDWIDth_*>>,
+  bandwidth <enum<BANDWIDth_*>> = BANDWIDTH_HIGHEST,
   allowVideoFields: <boolean> = true,
   name: <string> = nullptr
 };

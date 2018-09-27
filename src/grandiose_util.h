@@ -45,6 +45,7 @@ napi_status checkArgs(napi_env env, napi_callback_info info, char* methodName,
 #define GRANDIOSE_ASYNC_FAILURE 4098
 #define GRANDIOSE_BUILD_ERROR 4099
 #define GRANDIOSE_ALLOCATION_FAILURE 4100
+#define GRANDIOSE_RECEIVE_CREATE_FAIL 4101
 #define GRANDIOSE_SUCCESS 0
 
 struct carrier {
