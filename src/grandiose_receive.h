@@ -39,6 +39,7 @@ struct videoCarrier : carrier {
   uint32_t wait = 10000;
   NDIlib_recv_instance_t recv;
   NDIlib_video_frame_v2_t videoFrame;
+  napi_ref ref;
   ~videoCarrier() {}
 };
 

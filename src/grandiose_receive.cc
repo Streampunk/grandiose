@@ -232,6 +232,11 @@ void videoReceiveExecute(napi_env env, void* data) {
 
 }
 
+typedef struct videoDel_t {
+  napi_ref ref;
+  NDIlib_recv_instance_t recv;
+} videoDel_t;
+
 void videoReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   videoCarrier* c = (videoCarrier*) data;
 
@@ -248,9 +253,28 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   REJECT_STATUS;
 
   napi_value embedded;
-  c->status = napi_create_external(env, &c->videoFrame, finalizeVideo, c->recv, &embedded);
+  videoDel_t* vidDelHint = (videoDel_t*) malloc(sizeof(videoDel_t));
+  vidDelHint->ref = c->ref;
+  vidDelHint->recv = c->recv;
+  c->status = napi_create_external(env, &c->videoFrame, finalizeVideo, vidDelHint, &embedded);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "embedded", embedded);
+  REJECT_STATUS;
+
+  napi_value param;
+  c->status = napi_create_uint32(env, c->videoFrame.xres, &param);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "xres", param);
+  REJECT_STATUS;
+
+  c->status = napi_create_uint32(env, c->videoFrame.yres, &param);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "yres", param);
+  REJECT_STATUS;
+
+  c->status = napi_create_double(env, (double) c->videoFrame.picture_aspect_ratio, &param);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "pictureAspectRatio", param);
   REJECT_STATUS;
 
   napi_status status;
