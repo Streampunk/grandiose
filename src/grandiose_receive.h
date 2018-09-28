@@ -21,6 +21,7 @@
 
 napi_value receive(napi_env env, napi_callback_info info);
 napi_value videoReceive(napi_env env, napi_callback_info info);
+napi_value audioReceive(napi_env env, napi_callback_info info);
 
 struct receiveCarrier : carrier {
   NDIlib_source_t* source;
@@ -39,13 +40,13 @@ struct videoCarrier : carrier {
   uint32_t wait = 10000;
   NDIlib_recv_instance_t recv;
   NDIlib_video_frame_v2_t videoFrame;
-  napi_ref ref;
   ~videoCarrier() {}
 };
 
 struct audioCarrier : carrier {
   uint32_t wait = 10000;
   NDIlib_recv_instance_t recv;
+  NDIlib_audio_frame_v2_t audioFrame;
   ~audioCarrier() {}
 };
 
@@ -60,12 +61,5 @@ struct dataCarrier : carrier {
   NDIlib_recv_instance_t recv;
   ~dataCarrier() {}
 };
-
-typedef struct videoDel_t {
-  napi_ref ref;
-  NDIlib_recv_instance_t* recv;
-  int32_t ptps = 0;
-  int32_t ptpn = 0;
-} videoDel_t;
 
 #endif /* GRANDIOSE_RECEIVE_H */
