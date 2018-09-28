@@ -46,6 +46,8 @@ napi_status checkArgs(napi_env env, napi_callback_info info, char* methodName,
 #define GRANDIOSE_BUILD_ERROR 4099
 #define GRANDIOSE_ALLOCATION_FAILURE 4100
 #define GRANDIOSE_RECEIVE_CREATE_FAIL 4101
+#define GRANDIOSE_NOT_FOUND 4040
+#define GRANDIOSE_NOT_VIDEO 4140
 #define GRANDIOSE_SUCCESS 0
 
 struct carrier {
@@ -76,5 +78,6 @@ int32_t rejectStatus(napi_env env, carrier* c, char* file, int32_t line);
 
 bool validColorFormat(NDIlib_recv_color_format_e format);
 bool validBandwidth(NDIlib_recv_bandwidth_e bandwidth);
+bool validFrameFormat(NDIlib_frame_format_type_e format);
 
 #endif // GRANDIOSE_UTIL_H

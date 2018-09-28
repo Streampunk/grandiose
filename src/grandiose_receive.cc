@@ -15,6 +15,7 @@
 
 #include <chrono>
 #include <Processing.NDI.Lib.h>
+#include <inttypes.h>
 
 #ifdef _WIN32
 #ifdef _WIN64
@@ -30,12 +31,17 @@
 
 void finalizeReceive(napi_env env, void* data, void* hint) {
   printf("Releasing receiver.\n");
-  // NDIlib_recv_destroy((NDIlib_recv_instance_t) data);
+  NDIlib_recv_destroy((NDIlib_recv_instance_t) data);
 }
 
 void finalizeVideo(napi_env env, void* data, void* hint) {
-  printf("Releasing video frame.\n");
+  videoDel_t* vidDelHint = (videoDel_t*) hint;
+  printf("Releasing video frame with timestamp %d:%09d\n", vidDelHint->ptps, vidDelHint->ptpn);
+  napi_status status;
+  status = napi_delete_reference(env, vidDelHint->ref);
+  if (status != napi_ok) printf("Failed to delete video frame receive reference.\n.");
   NDIlib_recv_free_video_v2((NDIlib_recv_instance_t) hint, (NDIlib_video_frame_v2_t*) data);
+  free(vidDelHint);
 }
 
 void receiveExecute(napi_env env, void* data) {
@@ -102,7 +108,6 @@ napi_value receive(napi_env env, napi_callback_info info) {
   napi_value args[1];
   status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   CHECK_STATUS;
-  printf("I've got %i args.\n", argc);
 
   if (argc != (size_t) 1) NAPI_THROW_ERROR("Receiver must be created with an object containing at least a 'source' property.");
 
@@ -217,30 +222,28 @@ void videoReceiveExecute(napi_env env, void* data) {
   {
     case NDIlib_frame_type_none:
       printf("No data received.\n");
+      c->status = GRANDIOSE_NOT_FOUND;
+      c->errorMsg = "No video data received in the requested time interval.";
       break;
 
     // Video data
     case NDIlib_frame_type_video:
-      printf("Video data received (%dx%d at %d/%d).\n", c->videoFrame.xres, c->videoFrame.yres,
-        c->videoFrame.frame_rate_N, c->videoFrame.frame_rate_D);
+      /* printf("Video data %i received (%dx%d at %d/%d).\n", &c->videoFrame, c->videoFrame.xres, c->videoFrame.yres,
+        c->videoFrame.frame_rate_N, c->videoFrame.frame_rate_D); */
       break;
 
     default:
       printf("Other kind of data received.\n");
+      c->status = GRANDIOSE_NOT_VIDEO;
+      c->errorMsg = "Non-video data received on video capture.";
       break;
   }
-
 }
-
-typedef struct videoDel_t {
-  napi_ref ref;
-  NDIlib_recv_instance_t recv;
-} videoDel_t;
 
 void videoReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   videoCarrier* c = (videoCarrier*) data;
 
-  printf("Video receive completed.\n");
+  // printf("Video receive completed.\n");
 
   if (asyncStatus != napi_ok) {
     c->status = asyncStatus;
@@ -255,7 +258,9 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   napi_value embedded;
   videoDel_t* vidDelHint = (videoDel_t*) malloc(sizeof(videoDel_t));
   vidDelHint->ref = c->ref;
-  vidDelHint->recv = c->recv;
+  vidDelHint->recv = &c->recv;
+  vidDelHint->ptps = (int32_t) (c->videoFrame.timestamp / 10000000);
+  vidDelHint->ptpn = (c->videoFrame.timestamp % 10000000) * 100;
   c->status = napi_create_external(env, &c->videoFrame, finalizeVideo, vidDelHint, &embedded);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "embedded", embedded);
@@ -275,6 +280,20 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   c->status = napi_create_double(env, (double) c->videoFrame.picture_aspect_ratio, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "pictureAspectRatio", param);
+  REJECT_STATUS;
+
+  napi_value params, paramn;
+  c->status = napi_create_int32(env, vidDelHint->ptps, &params);
+  REJECT_STATUS;
+  c->status = napi_create_int32(env, vidDelHint->ptpn, &paramn);
+  REJECT_STATUS;
+  c->status = napi_create_array(env, &param);
+  REJECT_STATUS;
+  c->status = napi_set_element(env, param, 0, params);
+  REJECT_STATUS;
+  c->status = napi_set_element(env, param, 1, paramn);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "timestamp", param);
   REJECT_STATUS;
 
   napi_status status;
@@ -311,6 +330,9 @@ napi_value videoReceive(napi_env env, napi_callback_info info) {
       CHECK_STATUS;
     }
   }
+
+  status = napi_create_reference(env, thisValue, 1, &carrier->ref);
+  CHECK_STATUS;
 
   napi_value promise;
   status = napi_create_promise(env, &carrier->_deferred, &promise);

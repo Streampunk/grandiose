@@ -98,7 +98,6 @@ napi_value find(napi_env env, napi_callback_info info) {
   napi_value args[2];
 
   status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-  printf("I've got %i args.\n", argc);
   CHECK_STATUS;
   if (argc >= 1) {
     status = napi_typeof(env, args[0], &type);
@@ -156,8 +155,6 @@ napi_value find(napi_env env, napi_callback_info info) {
 
     } // type == napi_object
   } // argc >= 1
-
-  printf("argc = %i.\n", argc);
 
   if (argc >= 2) {
     status = napi_typeof(env, args[1], &type);

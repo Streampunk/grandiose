@@ -36,6 +36,11 @@ const BANDWIDTH_AUDIO_ONLY    =  10; // Receive metadata, audio.
 const BANDWIDTH_LOWEST        =  0; // Receive metadata, audio, video at a lower bandwidth and resolution.
 const BANDWIDTH_HIGHEST       =  100; // Receive metadata, audio, video at full resolution.
 
+const FORMAT_TYPE_PROGRESSIVE = 1;
+const FORMAT_TYPE_INTERLACED = 0;
+const FORMAT_TYPE_FIELD_0 = 2;
+const FORMAT_TYPE_FIELD_1 = 3;
+
 let find = function (...args) {
   if (args.length === 0) return addon.find();
   if (Array.isArray(args[0].groups)) {
@@ -67,5 +72,7 @@ module.exports = {
   COLOR_FORMAT_RGBX_RGBA, COLOR_FORMAT_UYVY_RGBA,
   COLOR_FORMAT_BGRX_BGRA_FLIPPED, COLOR_FORMAT_FASTEST,
   BANDWIDTH_METADATA_ONLY, BANDWIDTH_AUDIO_ONLY,
-  BANDWIDTH_LOWEST, BANDWIDTH_HIGHEST
+  BANDWIDTH_LOWEST, BANDWIDTH_HIGHEST,
+  FORMAT_TYPE_PROGRESSIVE, FORMAT_TYPE_INTERLACED,
+  FORMAT_TYPE_FIELD_0, FORMAT_TYPE_FIELD_1
 };

@@ -42,8 +42,8 @@ let video = await receiver.video();
 
 video is {
   type: 'video',
-  width: <int>,
-  height: <int>,
+  xres: <int>,
+  yres: <int>,
   fourcc: <string>, // define constants FOURCC_TYPE_*
   frameRate: <array<int>>,
   aspectRatio: <number>,

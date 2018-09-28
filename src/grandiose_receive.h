@@ -61,4 +61,11 @@ struct dataCarrier : carrier {
   ~dataCarrier() {}
 };
 
+typedef struct videoDel_t {
+  napi_ref ref;
+  NDIlib_recv_instance_t* recv;
+  int32_t ptps = 0;
+  int32_t ptpn = 0;
+} videoDel_t;
+
 #endif /* GRANDIOSE_RECEIVE_H */

@@ -34,6 +34,4 @@ struct findCarrier : carrier {
   };
 };
 
-#define GRANDIOSE_NOT_FOUND 404
-
 #endif /* GRANDIOSE_FIND_H */

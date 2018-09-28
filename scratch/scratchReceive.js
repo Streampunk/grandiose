@@ -8,11 +8,14 @@ async function run() {
   for ( let x = 0 ; x < 10 ; x++ ) {
     let v = await r.video();
     console.log('>>> VIDEO >>>', v);
+    v = null;
   }
   l = null;
   r = null;
-  global.gc();
-  setTimeout(() => { console.log("that's all folks"); }, 10000);
+  v = null;
+  setTimeout(() => { global.gc(); console.log("that's almost all folks"); }, 1000);
+  setTimeout(() => {   global.gc(); console.log("that's it"); }, 2000);
+  setTimeout(() => {   global.gc(); console.log("that's really it"); }, 3000);
 }
 
 run();

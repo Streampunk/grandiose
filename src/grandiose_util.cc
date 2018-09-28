@@ -165,3 +165,15 @@ bool validBandwidth(NDIlib_recv_bandwidth_e bandwidth) {
       return false;
   }
 }
+
+bool validFrameFormat(NDIlib_frame_format_type_e format) {
+  switch (format) {
+    case NDIlib_frame_format_type_progressive:
+    case NDIlib_frame_format_type_interleaved:
+    case NDIlib_frame_format_type_field_0:
+    case NDIlib_frame_format_type_field_1:
+      return true;
+    default:
+      return false;
+  }
+}
