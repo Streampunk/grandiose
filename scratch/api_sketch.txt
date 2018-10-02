@@ -38,7 +38,7 @@ receiver is {
   data: <fn<Promise<data>>>
 }
 
-let video = await receiver.video();
+let video = await receiver.video(<wait> = 10000);
 
 video is {
   type: 'video',
@@ -49,20 +49,25 @@ video is {
   aspectRatio: <number>,
   formatType: <enum<FRAME_FORMAT_*>>,
   lineStrideBytes: <int>,
-  timecode: <int>,
+  timecode:  [<int>, <int>],
   data: <Buffer>,
   metadata: <string>,
   timestamp: <int> or <undefined>
 }
 
-let audio = await receiver.audio();
+let audio = await receiver.audio(<opts> = {
+    audioFormat = AUDIO_FORMAT_FLOAT_32_SEPARATE,
+    referenceLevel = 20 // Only relevant for 16-bit ints
+  }, <wait> = 10000);
 
 audio is {
   type: 'audio',
-  sampleRate: <int>,
+  audioFormat: <enum<AUDIO_FORMAT_*>>
+  sampleRateN: <int>,
+  sampleRateD: <int>,
   channels: <int>,
   samples: <int>,
-  timecode: <int>,
+  timecode: [<int>, <int>],
   data: <Buffer>,
   channelStrideBytes: <int>,
   metadata: <string>,

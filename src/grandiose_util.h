@@ -22,6 +22,19 @@
 #include <Processing.NDI.Lib.h>
 #include "node_api.h"
 
+// The three different formats of raw audio data supported by NDI utility functions
+typedef enum Grandiose_audio_format_e {
+  // Default NDI audio format
+  // Channels stored one after the other in each block - 32-bit floating point values
+  Grandiose_audio_format_float_32_separate = 0,
+  // Alternative NDI audio foramt
+  // Channels stored as channel-interleaved 32-bit floating point values
+  Grandiose_audio_format_float_32_interleaved = 1,
+  // Alternative NDI audio format
+  // Channels stored as channel-interleaved 16-bit integer values
+  Grandiose_audio_format_int_16_interleaved = 2
+} Grandiose_audio_format_e;
+
 #define DECLARE_NAPI_METHOD(name, func) { name, 0, func, 0, 0, 0, napi_default, 0 }
 
 // Handling NAPI errors - use "napi_status status;" where used
@@ -95,5 +108,6 @@ int32_t rejectStatus(napi_env env, carrier* c, char* file, int32_t line);
 bool validColorFormat(NDIlib_recv_color_format_e format);
 bool validBandwidth(NDIlib_recv_bandwidth_e bandwidth);
 bool validFrameFormat(NDIlib_frame_format_type_e format);
+bool validAudioFormat(Grandiose_audio_format_e format);
 
 #endif // GRANDIOSE_UTIL_H

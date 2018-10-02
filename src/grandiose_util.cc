@@ -186,3 +186,14 @@ bool validFrameFormat(NDIlib_frame_format_type_e format) {
       return false;
   }
 }
+
+bool validAudioFormat(Grandiose_audio_format_e format) {
+  switch (format) {
+    case Grandiose_audio_format_float_32_separate:
+    case Grandiose_audio_format_int_16_interleaved:
+    case Grandiose_audio_format_float_32_interleaved:
+      return true;
+    default:
+      return false;
+  }
+}

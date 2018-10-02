@@ -41,6 +41,16 @@ const FORMAT_TYPE_INTERLACED = 0;
 const FORMAT_TYPE_FIELD_0 = 2;
 const FORMAT_TYPE_FIELD_1 = 3;
 
+// Default NDI audio format
+// Channels stored one after the other in each block - 32-bit floating point values
+const AUDIO_FORMAT_FLOAT_32_SEPARATE = 0;
+// Alternative NDI audio foramt
+// Channels stored as channel-interleaved 32-bit floating point values
+const AUDIO_FORMAT_FLOAT_32_INTERLEAVED = 1;
+// Alternative NDI audio format
+// Channels stored as channel-interleaved 16-bit integer values
+const AUDIO_FORMAT_INT_16_INTERLEAVED = 2;
+
 let find = function (...args) {
   if (args.length === 0) return addon.find();
   if (Array.isArray(args[0].groups)) {
@@ -64,5 +74,7 @@ module.exports = {
   BANDWIDTH_METADATA_ONLY, BANDWIDTH_AUDIO_ONLY,
   BANDWIDTH_LOWEST, BANDWIDTH_HIGHEST,
   FORMAT_TYPE_PROGRESSIVE, FORMAT_TYPE_INTERLACED,
-  FORMAT_TYPE_FIELD_0, FORMAT_TYPE_FIELD_1
+  FORMAT_TYPE_FIELD_0, FORMAT_TYPE_FIELD_1,
+  AUDIO_FORMAT_FLOAT_32_SEPARATE, AUDIO_FORMAT_FLOAT_32_INTERLEAVED,
+  AUDIO_FORMAT_INT_16_INTERLEAVED
 };

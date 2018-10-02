@@ -89,6 +89,13 @@ void receiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   c->status = napi_set_named_property(env, result, "audio", audioFn);
   REJECT_STATUS;
 
+  napi_value metadataFn;
+  c->status = napi_create_function(env, "metadata", NAPI_AUTO_LENGTH, metadataReceive,
+    nullptr, &metadataFn);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "metadata", metadataFn);
+  REJECT_STATUS;
+
   napi_value source, name, uri;
   c->status = napi_create_string_utf8(env, c->source->p_ndi_name, NAPI_AUTO_LENGTH, &name);
   REJECT_STATUS;
@@ -450,7 +457,7 @@ napi_value videoReceive(napi_env env, napi_callback_info info) {
 void audioReceiveExecute(napi_env env, void* data) {
   audioCarrier* c = (audioCarrier*) data;
 
-  printf("Audio receiver executing.\n");
+  // printf("Audio receiver executing.\n");
 
   switch (NDIlib_recv_capture_v2(c->recv, nullptr, &c->audioFrame, nullptr, c->wait))
   {
@@ -460,16 +467,28 @@ void audioReceiveExecute(napi_env env, void* data) {
       c->errorMsg = "No audio data received in the requested time interval.";
       break;
 
-    // Video data
+    // Audio data
     case NDIlib_frame_type_audio:
-      /* printf("Video data %i received (%dx%d at %d/%d).\n", &c->videoFrame, c->videoFrame.xres, c->videoFrame.yres,
-        c->videoFrame.frame_rate_N, c->videoFrame.frame_rate_D); */
+      switch (c->audioFormat) {
+        case Grandiose_audio_format_int_16_interleaved:
+          c->audioFrame16s.reference_level = c->referenceLevel;
+          c->audioFrame16s.p_data = new short[c->audioFrame.no_samples * c->audioFrame.no_channels];
+          NDIlib_util_audio_to_interleaved_16s_v2(&c->audioFrame, &c->audioFrame16s);
+          break;
+        case Grandiose_audio_format_float_32_interleaved:
+          c->audioFrame32fIlvd.p_data = new float[c->audioFrame.no_samples * c->audioFrame.no_channels];
+          NDIlib_util_audio_to_interleaved_32f_v2(&c->audioFrame, &c->audioFrame32fIlvd);
+          break;
+        case Grandiose_audio_format_float_32_separate:
+        default:
+          break;
+      }
       break;
 
     default:
       printf("Other kind of data received.\n");
       c->status = GRANDIOSE_NOT_AUDIO;
-      c->errorMsg = "Non-video data received on video capture.";
+      c->errorMsg = "Non-audio data received on audio capture.";
       break;
   }
 }
@@ -477,7 +496,7 @@ void audioReceiveExecute(napi_env env, void* data) {
 void audioReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   audioCarrier* c = (audioCarrier*) data;
 
-  printf("Audio receiver completing - status %i.\n", c->status);
+  // printf("Audio receiver completing - status %i.\n", c->status);
 
   if (asyncStatus != napi_ok) {
     c->status = asyncStatus;
@@ -499,6 +518,18 @@ void audioReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   c->status = napi_set_named_property(env, result, "type", param);
   REJECT_STATUS;
 
+  c->status = napi_create_int32(env, c->audioFormat, &param);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "audioFormat", param);
+  REJECT_STATUS;
+
+  if (c->audioFormat == Grandiose_audio_format_int_16_interleaved) {
+    c->status = napi_create_int32(env, c->referenceLevel, &param);
+    REJECT_STATUS;
+    c->status = napi_set_named_property(env, result, "referenceLevel", param);
+    REJECT_STATUS;
+  }
+
   c->status = napi_create_int32(env, c->audioFrame.sample_rate, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "sampleRate", param);
@@ -514,7 +545,8 @@ void audioReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   c->status = napi_set_named_property(env, result, "samples", param);
   REJECT_STATUS;
 
-  c->status = napi_create_int32(env, c->audioFrame.channel_stride_in_bytes, &param);
+  int32_t factor = (c->audioFormat == Grandiose_audio_format_int_16_interleaved) ? 2 : 1;
+  c->status = napi_create_int32(env, c->audioFrame.channel_stride_in_bytes / factor, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "channelStrideInBytes", param);
   REJECT_STATUS;
@@ -554,9 +586,21 @@ void audioReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
     REJECT_STATUS;
   }
 
-  char * rawFloats = (char*) c->audioFrame.p_data;
+  char * rawFloats;
+  switch (c->audioFormat) {
+    case Grandiose_audio_format_int_16_interleaved:
+      rawFloats = (char*) c->audioFrame16s.p_data;
+      break;
+    case Grandiose_audio_format_float_32_interleaved:
+      rawFloats = (char*) c->audioFrame32fIlvd.p_data;
+      break;
+    default:
+    case Grandiose_audio_format_float_32_separate:
+      rawFloats = (char*) c->audioFrame.p_data;
+      break;
+  }
   c->status = napi_create_buffer_copy(env,
-    c->audioFrame.channel_stride_in_bytes * c->audioFrame.no_channels,
+    (c->audioFrame.channel_stride_in_bytes / factor) * c->audioFrame.no_channels,
     rawFloats, nullptr, &param);
   REJECT_STATUS;
 
@@ -575,6 +619,170 @@ void audioReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
 napi_value audioReceive(napi_env env, napi_callback_info info) {
   napi_valuetype type;
   audioCarrier* c = new audioCarrier;
+
+  napi_value promise;
+  c->status = napi_create_promise(env, &c->_deferred, &promise);
+  REJECT_RETURN;
+
+  size_t argc = 2;
+  napi_value args[2];
+  napi_value thisValue;
+  c->status = napi_get_cb_info(env, info, &argc, args, &thisValue, nullptr);
+  REJECT_RETURN;
+
+  napi_value recvValue;
+  c->status = napi_get_named_property(env, thisValue, "embedded", &recvValue);
+  REJECT_RETURN;
+  void* recvData;
+  c->status = napi_get_value_external(env, recvValue, &recvData);
+  c->recv = (NDIlib_recv_instance_t) recvData;
+  REJECT_RETURN;
+
+  if (argc >= 1) {
+    napi_value configValue, waitValue;
+    configValue = args[0];
+    c->status = napi_typeof(env, configValue, &type);
+    REJECT_RETURN;
+    waitValue = (type == napi_number) ? args[0] : args[1];
+    if (type == napi_object) {
+      bool isArray;
+      c->status = napi_is_array(env, configValue, &isArray);
+      REJECT_RETURN;
+      if (isArray) REJECT_ERROR_RETURN(
+        "First argument to audio receive cannot be an array.",
+        GRANDIOSE_INVALID_ARGS);
+
+      napi_value param;
+      c->status = napi_get_named_property(env, configValue, "audioFormat", &param);
+      REJECT_RETURN;
+      c->status = napi_typeof(env, param, &type);
+      REJECT_RETURN;
+      if (type == napi_number) {
+        uint32_t audioFormatN;
+        c->status = napi_get_value_uint32(env, param, &audioFormatN);
+        REJECT_RETURN;
+        if (!validAudioFormat((Grandiose_audio_format_e) audioFormatN)) REJECT_ERROR_RETURN(
+          "Invalid audio format specified.", GRANDIOSE_INVALID_ARGS);
+        c->audioFormat = (Grandiose_audio_format_e) audioFormatN;
+      }
+      else if (type != napi_undefined) REJECT_ERROR_RETURN(
+        "Audio format value must be a number if present.",
+        GRANDIOSE_INVALID_ARGS);
+
+      c->status = napi_get_named_property(env, configValue, "referenceLevel", &param);
+      REJECT_RETURN;
+      c->status = napi_typeof(env, param, &type);
+      REJECT_RETURN;
+      if (type == napi_number) {
+        c->status = napi_get_value_int32(env, param, &c->referenceLevel);
+        REJECT_RETURN;
+      }
+      else if (type != napi_undefined) REJECT_ERROR_RETURN(
+        "Audio reference level must be a number if present.",
+        GRANDIOSE_INVALID_ARGS);
+    }
+    c->status = napi_typeof(env, waitValue, &type);
+    REJECT_RETURN;
+    if (type == napi_number) {
+      c->status = napi_get_value_uint32(env, waitValue, &c->wait);
+      REJECT_RETURN;
+    }
+  }
+
+  napi_value resource_name;
+  c->status = napi_create_string_utf8(env, "audioReceive", NAPI_AUTO_LENGTH, &resource_name);
+  REJECT_RETURN;
+  c->status = napi_create_async_work(env, NULL, resource_name, audioReceiveExecute,
+    audioReceiveComplete, c, &c->_request);
+  REJECT_RETURN;
+  c->status = napi_queue_async_work(env, c->_request);
+  REJECT_RETURN;
+
+  return promise;
+}
+
+void metadataReceiveExecute(napi_env env, void* data) {
+  metadataCarrier* c = (metadataCarrier*) data;
+
+  printf("Metadata receiver executing.\n");
+
+  switch (NDIlib_recv_capture_v2(c->recv, nullptr, nullptr, &c->metadataFrame, c->wait))
+  {
+    case NDIlib_frame_type_none:
+      printf("No data received.\n");
+      c->status = GRANDIOSE_NOT_FOUND;
+      c->errorMsg = "No audio data received in the requested time interval.";
+      break;
+
+    // Metadata
+    case NDIlib_frame_type_metadata:
+      break;
+
+    default:
+      printf("Other kind of data received.\n");
+      c->status = GRANDIOSE_NOT_AUDIO;
+      c->errorMsg = "Non-metadata payload received on metadata capture.";
+      break;
+  }
+
+}
+
+void metadataReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
+  metadataCarrier* c = (metadataCarrier*) data;
+  printf("Metadata receiver completing - status %i.\n", c->status);
+
+  if (asyncStatus != napi_ok) {
+    c->status = asyncStatus;
+    c->errorMsg = "Async metadata payload receive failed to complete.";
+  }
+  REJECT_STATUS;
+
+  napi_value result;
+  c->status = napi_create_object(env, &result);
+  REJECT_STATUS;
+
+  napi_value param;
+  c->status = napi_create_string_utf8(env, "metadata", NAPI_AUTO_LENGTH, &param);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "type", param);
+  REJECT_STATUS;
+
+  c->status = napi_create_int32(env, c->metadataFrame.length, &param);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "length", param);
+  REJECT_STATUS;
+
+  napi_value params, paramn;
+  c->status = napi_create_int32(env, (int32_t) (c->metadataFrame.timecode / 10000000), &params);
+  REJECT_STATUS;
+  c->status = napi_create_int32(env, (c->metadataFrame.timecode % 10000000) * 100, &paramn);
+  REJECT_STATUS;
+  c->status = napi_create_array(env, &param);
+  REJECT_STATUS;
+  c->status = napi_set_element(env, param, 0, params);
+  REJECT_STATUS;
+  c->status = napi_set_element(env, param, 1, paramn);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "timecode", param);
+  REJECT_STATUS;
+
+  c->status = napi_create_string_utf8(env, c->metadataFrame.p_data, NAPI_AUTO_LENGTH, &param);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "data", param);
+  REJECT_STATUS;
+
+  NDIlib_recv_free_metadata(c->recv, &c->metadataFrame);
+
+  napi_status status;
+  status = napi_resolve_deferred(env, c->_deferred, result);
+  FLOATING_STATUS;
+
+  tidyCarrier(env, c);
+}
+
+napi_value metadataReceive(napi_env env, napi_callback_info info) {
+  napi_valuetype type;
+  metadataCarrier* c = new metadataCarrier;
 
   napi_value promise;
   c->status = napi_create_promise(env, &c->_deferred, &promise);
@@ -604,27 +812,15 @@ napi_value audioReceive(napi_env env, napi_callback_info info) {
   }
 
   napi_value resource_name;
-  c->status = napi_create_string_utf8(env, "audioReceive", NAPI_AUTO_LENGTH, &resource_name);
+  c->status = napi_create_string_utf8(env, "MetadataReceive", NAPI_AUTO_LENGTH, &resource_name);
   REJECT_RETURN;
-  c->status = napi_create_async_work(env, NULL, resource_name, audioReceiveExecute,
-    audioReceiveComplete, c, &c->_request);
+  c->status = napi_create_async_work(env, NULL, resource_name, metadataReceiveExecute,
+    metadataReceiveComplete, c, &c->_request);
   REJECT_RETURN;
   c->status = napi_queue_async_work(env, c->_request);
   REJECT_RETURN;
 
   return promise;
-}
-
-void metadataReceiveExecute(napi_env env, void* data) {
-
-}
-
-void metadataReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
-
-}
-
-napi_value metadataReceive(napi_env env, napi_callback_info info) {
-
 }
 
 void dataReceiveExecute(napi_env env, void* data) {

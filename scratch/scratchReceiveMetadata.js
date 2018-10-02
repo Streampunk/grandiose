@@ -20,17 +20,15 @@ async function run() {
   console.log('>>> FOUND >>>', l);
   let r = await g.receive({ source: l[0] });
   console.log('>>> RECEIVER >>>', r);
-  for ( let x = 0 ; x < 100 ; x++ ) {
-    let a = await r.audio({ audioFormat : g.AUDIO_FORMAT_FLOAT_32_INTERLEAVED });
-    console.log('>>> AUDIO >>>', a);
-    console.log(a.data.slice(a.channelStrideBytes));
-    console.log(a.data.slice(a.channelStrideBytes*2));
-    console.log(a.data.length);
-    v = null;
+  for ( let x = 0 ; x < 10 ; x++ ) {
+    let m = await r.metadata();
+    console.log('>>> METADATA >>>', m);
+    console.log(process.memoryUsage());
+    m = null;
   }
   l = null;
   r = null;
-  v = null;
+  m = null;
   console.log(process.memoryUsage());
   setTimeout(() => { global.gc();
     console.log("that's almost all folks", process.memoryUsage()); }, 1000);
