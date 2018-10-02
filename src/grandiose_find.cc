@@ -164,7 +164,7 @@ napi_value find(napi_env env, napi_callback_info info) {
   }
 
   c->find = NDIlib_find_create_v2(&find_create);
-  if (!c->find) NAPI_THROW_ERROR("Failed to create NDI find instance.\n");
+  if (!c->find) REJECT_ERROR_RETURN("Failed to create NDI find instance.", GRANDIOSE_INVALID_ARGS);
 
   napi_value resource_name;
   c->status = napi_create_string_utf8(env, "Find", NAPI_AUTO_LENGTH, &resource_name);

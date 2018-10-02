@@ -89,6 +89,45 @@ void receiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   c->status = napi_set_named_property(env, result, "audio", audioFn);
   REJECT_STATUS;
 
+  napi_value source, name, uri;
+  c->status = napi_create_string_utf8(env, c->source->p_ndi_name, NAPI_AUTO_LENGTH, &name);
+  REJECT_STATUS;
+  c->status = napi_create_string_utf8(env, c->source->p_url_address, NAPI_AUTO_LENGTH, &uri);
+  REJECT_STATUS;
+  c->status = napi_create_object(env, &source);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, source, "name", name);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, source, "urlAddress", uri);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "source", source);
+  REJECT_STATUS;
+
+  napi_value colorFormat;
+  c->status = napi_create_int32(env, (int32_t) c->colorFormat, &colorFormat);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "colorFormat", colorFormat);
+  REJECT_STATUS;
+
+  napi_value bandwidth;
+  c->status = napi_create_int32(env, (int32_t) c->bandwidth, &bandwidth);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "bandwidth", bandwidth);
+  REJECT_STATUS;
+
+  napi_value allowVideoFields;
+  c->status = napi_get_boolean(env, c->allowVideoFields, &allowVideoFields);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "allowVideoFields", allowVideoFields);
+  REJECT_STATUS;
+
+  if (c->name != nullptr) {
+    c->status = napi_create_string_utf8(env, c->name, NAPI_AUTO_LENGTH, &name);
+    REJECT_STATUS;
+    c->status = napi_set_named_property(env, result, "name", name);
+    REJECT_STATUS;
+  }
+
   napi_status status;
   status = napi_resolve_deferred(env, c->_deferred, result);
   FLOATING_STATUS;
@@ -109,22 +148,18 @@ napi_value receive(napi_env env, napi_callback_info info) {
   c->status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   REJECT_RETURN;
 
-  if (argc != (size_t) 1) {
-    c->errorMsg = "Receiver must be created with an object containing at least a 'source' property.";
-    c->status = GRANDIOSE_INVALID_ARGS;
-    REJECT_RETURN;
-  }
+  if (argc != (size_t) 1) REJECT_ERROR_RETURN(
+    "Receiver must be created with an object containing at least a 'source' property.",
+    GRANDIOSE_INVALID_ARGS);
 
   c->status = napi_typeof(env, args[0], &type);
   REJECT_RETURN;
   bool isArray;
   c->status = napi_is_array(env, args[0], &isArray);
   REJECT_RETURN;
-  if ((type != napi_object) || isArray) {
-    c->errorMsg = "Single argument must be an object, not an array, containing at least a 'source' property.";
-    c->status = GRANDIOSE_INVALID_ARGS;
-    REJECT_RETURN;
-  }
+  if ((type != napi_object) || isArray) REJECT_ERROR_RETURN(
+    "Single argument must be an object, not an array, containing at least a 'source' property.",
+    GRANDIOSE_INVALID_ARGS);
 
   napi_value config = args[0];
   napi_value source, colorFormat, bandwidth, allowVideoFields, name;
@@ -136,32 +171,26 @@ napi_value receive(napi_env env, napi_callback_info info) {
   REJECT_RETURN;
   c->status = napi_is_array(env, source, &isArray);
   REJECT_RETURN;
-  if ((type != napi_object) || isArray) {
-    c->errorMsg = "Source property must be an object and not an array.";
-    c->status = GRANDIOSE_INVALID_ARGS;
-    REJECT_RETURN;
-  }
+  if ((type != napi_object) || isArray) REJECT_ERROR_RETURN(
+    "Source property must be an object and not an array.",
+    GRANDIOSE_INVALID_ARGS);
 
   napi_value checkType;
   c->status = napi_get_named_property(env, source, "name", &checkType);
   REJECT_RETURN;
   c->status = napi_typeof(env, checkType, &type);
   REJECT_RETURN;
-  if (type != napi_string) {
-    c->errorMsg = "Source property must have a 'name' sub-property that is of type string.";
-    c->status = GRANDIOSE_INVALID_ARGS;
-    REJECT_RETURN;
-  }
+  if (type != napi_string) REJECT_ERROR_RETURN(
+    "Source property must have a 'name' sub-property that is of type string.",
+    GRANDIOSE_INVALID_ARGS);
 
   c->status = napi_get_named_property(env, source, "urlAddress", &checkType);
   REJECT_RETURN;
   c->status = napi_typeof(env, checkType, &type);
   REJECT_RETURN;
-  if (type != napi_string) {
-    c->errorMsg = "Source property must have a 'urlAddress' sub-property that is of type string.";
-    c->status = GRANDIOSE_INVALID_ARGS;
-    REJECT_RETURN;
-  }
+  if (type != napi_string) REJECT_ERROR_RETURN(
+    "Source property must have a 'urlAddress' sub-property that is of type string.",
+    GRANDIOSE_INVALID_ARGS);
 
   c->source = new NDIlib_source_t();
   c->status = makeNativeSource(env, source, c->source);
@@ -172,21 +201,17 @@ napi_value receive(napi_env env, napi_callback_info info) {
   c->status = napi_typeof(env, colorFormat, &type);
   REJECT_RETURN;
   if (type != napi_undefined) {
-    if (type != napi_number) {
-      c->errorMsg = "Color format property must be a number.";
-      c->status = GRANDIOSE_INVALID_ARGS;
-      REJECT_RETURN;
-    }
+    if (type != napi_number) REJECT_ERROR_RETURN(
+      "Color format property must be a number.",
+      GRANDIOSE_INVALID_ARGS);
     int32_t enumValue;
     c->status = napi_get_value_int32(env, colorFormat, &enumValue);
     REJECT_RETURN;
 
     c->colorFormat = (NDIlib_recv_color_format_e) enumValue;
-    if (!validColorFormat(c->colorFormat)) {
-      c->errorMsg = "Invalid colour format value.";
-      c->status = GRANDIOSE_INVALID_ARGS;
-      REJECT_RETURN;
-    }
+    if (!validColorFormat(c->colorFormat)) REJECT_ERROR_RETURN(
+      "Invalid colour format value.",
+      GRANDIOSE_INVALID_ARGS);
   }
 
   c->status = napi_get_named_property(env, config, "bandwidth", &bandwidth);
@@ -194,21 +219,17 @@ napi_value receive(napi_env env, napi_callback_info info) {
   c->status = napi_typeof(env, bandwidth, &type);
   REJECT_RETURN;
   if (type != napi_undefined) {
-    if (type != napi_number) {
-      c->errorMsg = "Bandwidth property must be a number.";
-      c->status = GRANDIOSE_INVALID_ARGS;
-      REJECT_RETURN;
-    }
+    if (type != napi_number) REJECT_ERROR_RETURN(
+      "Bandwidth property must be a number.",
+      GRANDIOSE_INVALID_ARGS);
     int32_t enumValue;
     c->status = napi_get_value_int32(env, bandwidth, &enumValue);
     REJECT_RETURN;
 
     c->bandwidth = (NDIlib_recv_bandwidth_e) enumValue;
-    if (!validBandwidth(c->bandwidth)) {
-      c->errorMsg = "Invalid bandwidth value.";
-      c->status = GRANDIOSE_INVALID_ARGS;
-      REJECT_RETURN;
-    }
+    if (!validBandwidth(c->bandwidth)) REJECT_ERROR_RETURN(
+      "Invalid bandwidth value.",
+      GRANDIOSE_INVALID_ARGS);
   }
 
   c->status = napi_get_named_property(env, config, "allowVideoFields", &allowVideoFields);
@@ -216,11 +237,9 @@ napi_value receive(napi_env env, napi_callback_info info) {
   c->status = napi_typeof(env, allowVideoFields, &type);
   REJECT_RETURN;
   if (type != napi_undefined) {
-    if (type != napi_boolean) {
-      c->errorMsg = "Allow video fields property must be a Boolean.";
-      c->status = GRANDIOSE_INVALID_ARGS;
-      REJECT_RETURN;
-    }
+    if (type != napi_boolean) REJECT_ERROR_RETURN(
+      "Allow video fields property must be a Boolean.",
+      GRANDIOSE_INVALID_ARGS);
     c->status = napi_get_value_bool(env, allowVideoFields, &c->allowVideoFields);
     REJECT_RETURN;
   }
@@ -229,11 +248,9 @@ napi_value receive(napi_env env, napi_callback_info info) {
   REJECT_RETURN;
   c->status = napi_typeof(env, name, &type);
   if (type != napi_undefined) {
-    if (type != napi_string) {
-      c->errorMsg = "Optional name property must be a string when present.";
-      c->status = GRANDIOSE_INVALID_ARGS;
-      REJECT_RETURN;
-    }
+    if (type != napi_string) REJECT_ERROR_RETURN(
+      "Optional name property must be a string when present.",
+      GRANDIOSE_INVALID_ARGS);
     size_t namel;
     c->status = napi_get_value_string_utf8(env, name, nullptr, 0, &namel);
     REJECT_RETURN;

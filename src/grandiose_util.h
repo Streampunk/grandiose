@@ -80,6 +80,18 @@ int32_t rejectStatus(napi_env env, carrier* c, char* file, int32_t line);
   return nullptr; \
 }
 
+#define REJECT_ERROR(msg, status) { \
+  c->errorMsg = msg; \
+  c->status = status; \
+  REJECT_STATUS; \
+}
+
+#define REJECT_ERROR_RETURN(msg, stat) { \
+  c->errorMsg = msg; \
+  c->status = stat; \
+  REJECT_RETURN; \
+}
+
 bool validColorFormat(NDIlib_recv_color_format_e format);
 bool validBandwidth(NDIlib_recv_bandwidth_e bandwidth);
 bool validFrameFormat(NDIlib_frame_format_type_e format);
