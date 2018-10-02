@@ -405,45 +405,44 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
 }
 
 napi_value videoReceive(napi_env env, napi_callback_info info) {
-  napi_status status;
   napi_valuetype type;
-  videoCarrier* carrier = new videoCarrier;
+  videoCarrier* c = new videoCarrier;
+
+  napi_value promise;
+  c->status = napi_create_promise(env, &c->_deferred, &promise);
+  REJECT_RETURN;
 
   size_t argc = 1;
   napi_value args[1];
   napi_value thisValue;
-  status = napi_get_cb_info(env, info, &argc, args, &thisValue, nullptr);
-  CHECK_STATUS;
+  c->status = napi_get_cb_info(env, info, &argc, args, &thisValue, nullptr);
+  REJECT_RETURN;
 
   napi_value recvValue;
-  status = napi_get_named_property(env, thisValue, "embedded", &recvValue);
-  CHECK_STATUS;
+  c->status = napi_get_named_property(env, thisValue, "embedded", &recvValue);
+  REJECT_RETURN;
   void* recvData;
-  status = napi_get_value_external(env, recvValue, &recvData);
-  carrier->recv = (NDIlib_recv_instance_t) recvData;
-  CHECK_STATUS;
+  c->status = napi_get_value_external(env, recvValue, &recvData);
+  c->recv = (NDIlib_recv_instance_t) recvData;
+  REJECT_RETURN;
 
   if (argc >= 1) {
-    status = napi_typeof(env, args[0], &type);
-    CHECK_STATUS;
+    c->status = napi_typeof(env, args[0], &type);
+    REJECT_RETURN;
     if (type == napi_number) {
-      status = napi_get_value_uint32(env, args[0], &carrier->wait);
-      CHECK_STATUS;
+      c->status = napi_get_value_uint32(env, args[0], &c->wait);
+      REJECT_RETURN;
     }
   }
 
-  napi_value promise;
-  status = napi_create_promise(env, &carrier->_deferred, &promise);
-  CHECK_STATUS;
-
   napi_value resource_name;
-  status = napi_create_string_utf8(env, "VideoReceive", NAPI_AUTO_LENGTH, &resource_name);
-  CHECK_STATUS;
-  status = napi_create_async_work(env, NULL, resource_name, videoReceiveExecute,
-    videoReceiveComplete, carrier, &carrier->_request);
-  CHECK_STATUS;
-  status = napi_queue_async_work(env, carrier->_request);
-  CHECK_STATUS;
+  c->status = napi_create_string_utf8(env, "VideoReceive", NAPI_AUTO_LENGTH, &resource_name);
+  REJECT_RETURN;
+  c->status = napi_create_async_work(env, NULL, resource_name, videoReceiveExecute,
+    videoReceiveComplete, c, &c->_request);
+  REJECT_RETURN;
+  c->status = napi_queue_async_work(env, c->_request);
+  REJECT_RETURN;
 
   return promise;
 }
@@ -556,20 +555,11 @@ void audioReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   }
 
   char * rawFloats = (char*) c->audioFrame.p_data;
-  // printf("Float %f, raw1 = %i, raw2 = %i, raw3 = %i, raw4 = %i", c->audioFrame.p_data[0],
-  //  rawFloats[0], rawFloats[1], rawFloats[2], rawFloats[3]);
   c->status = napi_create_buffer_copy(env,
     c->audioFrame.channel_stride_in_bytes * c->audioFrame.no_channels,
     rawFloats, nullptr, &param);
   REJECT_STATUS;
-  /* napi_value paramt;
-  c->status = napi_create_typedarray(env, napi_float32_array,
-    c->audioFrame.no_samples * c->audioFrame.no_channels, param, 0, &paramt);
-  const napi_extended_error_info* errorInfo = (const napi_extended_error_info*) malloc(sizeof(napi_extended_error_info));
-  napi_get_last_error_info(env, &errorInfo);
-  printf("Status is %i with error %s.\n", c->status, errorInfo->error_message);
-  c->errorMsg = errorInfo->error_message;
-  REJECT_STATUS; */
+
   c->status = napi_set_named_property(env, result, "data", param);
   REJECT_STATUS;
 
@@ -583,45 +573,44 @@ void audioReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
 }
 
 napi_value audioReceive(napi_env env, napi_callback_info info) {
-  napi_status status;
   napi_valuetype type;
-  audioCarrier* carrier = new audioCarrier;
+  audioCarrier* c = new audioCarrier;
+
+  napi_value promise;
+  c->status = napi_create_promise(env, &c->_deferred, &promise);
+  REJECT_RETURN;
 
   size_t argc = 1;
   napi_value args[1];
   napi_value thisValue;
-  status = napi_get_cb_info(env, info, &argc, args, &thisValue, nullptr);
-  CHECK_STATUS;
+  c->status = napi_get_cb_info(env, info, &argc, args, &thisValue, nullptr);
+  REJECT_RETURN;
 
   napi_value recvValue;
-  status = napi_get_named_property(env, thisValue, "embedded", &recvValue);
-  CHECK_STATUS;
+  c->status = napi_get_named_property(env, thisValue, "embedded", &recvValue);
+  REJECT_RETURN;
   void* recvData;
-  status = napi_get_value_external(env, recvValue, &recvData);
-  carrier->recv = (NDIlib_recv_instance_t) recvData;
-  CHECK_STATUS;
+  c->status = napi_get_value_external(env, recvValue, &recvData);
+  c->recv = (NDIlib_recv_instance_t) recvData;
+  REJECT_RETURN;
 
   if (argc >= 1) {
-    status = napi_typeof(env, args[0], &type);
-    CHECK_STATUS;
+    c->status = napi_typeof(env, args[0], &type);
+    REJECT_RETURN;
     if (type == napi_number) {
-      status = napi_get_value_uint32(env, args[0], &carrier->wait);
-      CHECK_STATUS;
+      c->status = napi_get_value_uint32(env, args[0], &c->wait);
+      REJECT_RETURN;
     }
   }
 
-  napi_value promise;
-  status = napi_create_promise(env, &carrier->_deferred, &promise);
-  CHECK_STATUS;
-
   napi_value resource_name;
-  status = napi_create_string_utf8(env, "audioReceive", NAPI_AUTO_LENGTH, &resource_name);
-  CHECK_STATUS;
-  status = napi_create_async_work(env, NULL, resource_name, audioReceiveExecute,
-    audioReceiveComplete, carrier, &carrier->_request);
-  CHECK_STATUS;
-  status = napi_queue_async_work(env, carrier->_request);
-  CHECK_STATUS;
+  c->status = napi_create_string_utf8(env, "audioReceive", NAPI_AUTO_LENGTH, &resource_name);
+  REJECT_RETURN;
+  c->status = napi_create_async_work(env, NULL, resource_name, audioReceiveExecute,
+    audioReceiveComplete, c, &c->_request);
+  REJECT_RETURN;
+  c->status = napi_queue_async_work(env, c->_request);
+  REJECT_RETURN;
 
   return promise;
 }
