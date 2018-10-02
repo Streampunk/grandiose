@@ -15,8 +15,8 @@
 
 const addon = require('bindings')('grandiose');
 
-// const SegfaultHandler = require('segfault-handler');
-// SegfaultHandler.registerHandler("crash.log"); // With no argument, SegfaultHandler will generate a generic log file name
+//const SegfaultHandler = require('segfault-handler');
+//SegfaultHandler.registerHandler("crash.log"); // With no argument, SegfaultHandler will generate a generic log file name
 
 const COLOR_FORMAT_BGRX_BGRA = 0; // No alpha channel: BGRX, Alpha channel: BGRA
 const COLOR_FORMAT_UYVY_BGRA = 1; // No alpha channel: UYVY, Alpha channel: BGRA
@@ -52,22 +52,12 @@ let find = function (...args) {
   return addon.find.apply(null, args);
 }
 
-function promiseWrap (p) {
-  return function (...args) {
-    try {
-      return p.apply(null, args);
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
-}
-
 module.exports = {
   version: addon.version,
-  find: promiseWrap(find),
+  find: find,
   isSupportedCPU: addon.isSupportedCPU,
-  receive: promiseWrap(addon.receive),
-  send: promiseWrap(addon.send),
+  receive: addon.receive,
+  send: addon.send,
   COLOR_FORMAT_BGRX_BGRA, COLOR_FORMAT_UYVY_BGRA,
   COLOR_FORMAT_RGBX_RGBA, COLOR_FORMAT_UYVY_RGBA,
   COLOR_FORMAT_BGRX_BGRA_FLIPPED, COLOR_FORMAT_FASTEST,

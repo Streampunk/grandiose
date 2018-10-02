@@ -83,11 +83,12 @@ void findComplete(napi_env env, napi_status asyncStatus, void* data) {
 }
 
 napi_value find(napi_env env, napi_callback_info info) {
-  napi_status status;
   napi_valuetype type;
-  findCarrier* carrier = new findCarrier;
+  findCarrier* c = new findCarrier;
 
-  // if (!NDIlib_initialize()) NAPI_THROW_ERROR("Failed to initialize NDI subsystem.\n");
+  napi_value promise;
+  c-> status = napi_create_promise(env, &c->_deferred, &promise);
+  REJECT_RETURN;
 
   NDIlib_find_create_t find_create;
   find_create.show_local_sources = true;
@@ -97,56 +98,53 @@ napi_value find(napi_env env, napi_callback_info info) {
   size_t argc = 2;
   napi_value args[2];
 
-  status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-  CHECK_STATUS;
+  c->status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+  REJECT_RETURN;
   if (argc >= 1) {
-    status = napi_typeof(env, args[0], &type);
-    CHECK_STATUS;
+    c->status = napi_typeof(env, args[0], &type);
+    REJECT_RETURN;
     if (type == napi_object) {
       napi_value property;
-      status = napi_get_named_property(env, args[0], "showLocalSources", &property);
-      if (status == napi_ok) {
-        status = napi_typeof(env, property, &type);
-        CHECK_STATUS;
+      c->status = napi_get_named_property(env, args[0], "showLocalSources", &property);
+      if (c->status == napi_ok) {
+        c->status = napi_typeof(env, property, &type);
+        REJECT_RETURN;
         if (type == napi_boolean) {
-          status = napi_get_value_bool(env, property, &find_create.show_local_sources);
-          CHECK_STATUS;
-          printf("Find create show local sources %i\n", find_create.show_local_sources);
+          c->status = napi_get_value_bool(env, property, &find_create.show_local_sources);
+          REJECT_RETURN;
         }
       } // status == napi_ok for showLocalSources
-      status = napi_get_named_property(env, args[0], "groups", &property);
-      if (status == napi_ok) {
-        status = napi_typeof(env, property, &type);
-        CHECK_STATUS;
+      c->status = napi_get_named_property(env, args[0], "groups", &property);
+      if (c->status == napi_ok) {
+        c->status = napi_typeof(env, property, &type);
+        REJECT_RETURN;
         switch (type) {
           case napi_string:
             size_t len;
-            status = napi_get_value_string_utf8(env, property, nullptr, 0, &len);
-            CHECK_STATUS;
+            c->status = napi_get_value_string_utf8(env, property, nullptr, 0, &len);
+            REJECT_RETURN;
             find_create.p_groups = (const char *) malloc(len + 1);
-            status = napi_get_value_string_utf8(env, property,
+            c->status = napi_get_value_string_utf8(env, property,
               (char *) find_create.p_groups, len + 1, &len);
-            CHECK_STATUS;
-            printf("Find create groups %s\n", find_create.p_groups);
+            REJECT_RETURN;
             break;
           default:
             break;
         }
       } // status == napi_ok for p_groups
-      status = napi_get_named_property(env, args[0], "extraIPs", &property);
-      if (status == napi_ok) {
-        status = napi_typeof(env, property, &type);
-        CHECK_STATUS;
+      c->status = napi_get_named_property(env, args[0], "extraIPs", &property);
+      if (c->status == napi_ok) {
+        c->status = napi_typeof(env, property, &type);
+        REJECT_RETURN;
         switch (type) {
           case napi_string:
             size_t len;
-            status =  napi_get_value_string_utf8(env, property, nullptr, 0, &len);
-            CHECK_STATUS;
+            c->status =  napi_get_value_string_utf8(env, property, nullptr, 0, &len);
+            REJECT_RETURN;
             find_create.p_extra_ips = (const char *) malloc(len + 1);
-            status = napi_get_value_string_utf8(env, property,
+            c->status = napi_get_value_string_utf8(env, property,
               (char *) find_create.p_extra_ips, len + 1, &len);
-            CHECK_STATUS;
-            printf("Find create groups %s\n", find_create.p_extra_ips);
+            REJECT_RETURN;
             break;
           default:
             break;
@@ -157,30 +155,25 @@ napi_value find(napi_env env, napi_callback_info info) {
   } // argc >= 1
 
   if (argc >= 2) {
-    status = napi_typeof(env, args[1], &type);
-    CHECK_STATUS;
+    c->status = napi_typeof(env, args[1], &type);
+    REJECT_RETURN;
     if (type == napi_number) {
-      status = napi_get_value_uint32(env, args[1], &carrier->wait);
-      CHECK_STATUS;
-      printf("Set wait to %u.\n", carrier->wait);
+      c->status = napi_get_value_uint32(env, args[1], &c->wait);
+      REJECT_RETURN;
     }
   }
 
-  carrier->find = NDIlib_find_create_v2(&find_create);
-  if (!carrier->find) NAPI_THROW_ERROR("Failed to create NDI find instance.\n");
-
-  napi_value promise;
-  status = napi_create_promise(env, &carrier->_deferred, &promise);
-  CHECK_STATUS;
+  c->find = NDIlib_find_create_v2(&find_create);
+  if (!c->find) NAPI_THROW_ERROR("Failed to create NDI find instance.\n");
 
   napi_value resource_name;
-  status = napi_create_string_utf8(env, "Find", NAPI_AUTO_LENGTH, &resource_name);
-  CHECK_STATUS;
-  status = napi_create_async_work(env, NULL, resource_name, findExecute,
-    findComplete, carrier, &carrier->_request);
-  CHECK_STATUS;
-  status = napi_queue_async_work(env, carrier->_request);
-  CHECK_STATUS;
+  c->status = napi_create_string_utf8(env, "Find", NAPI_AUTO_LENGTH, &resource_name);
+  REJECT_RETURN;
+  c->status = napi_create_async_work(env, NULL, resource_name, findExecute,
+    findComplete, c, &c->_request);
+  REJECT_RETURN;
+  c->status = napi_queue_async_work(env, c->_request);
+  REJECT_RETURN;
 
   return promise;
 }

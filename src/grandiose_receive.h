@@ -24,7 +24,7 @@ napi_value videoReceive(napi_env env, napi_callback_info info);
 napi_value audioReceive(napi_env env, napi_callback_info info);
 
 struct receiveCarrier : carrier {
-  NDIlib_source_t* source;
+  NDIlib_source_t* source = nullptr;
   NDIlib_recv_color_format_e colorFormat = NDIlib_recv_color_format_fastest;
   NDIlib_recv_bandwidth_e bandwidth = NDIlib_recv_bandwidth_highest;
   bool allowVideoFields = true;
@@ -32,7 +32,9 @@ struct receiveCarrier : carrier {
   NDIlib_recv_instance_t recv;
   ~receiveCarrier() {
     free(name);
-    delete source;
+    if (source != nullptr) {
+      delete source;
+    }
   }
 };
 

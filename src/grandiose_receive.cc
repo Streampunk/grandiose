@@ -97,117 +97,159 @@ void receiveComplete(napi_env env, napi_status asyncStatus, void* data) {
 }
 
 napi_value receive(napi_env env, napi_callback_info info) {
-  napi_status status;
   napi_valuetype type;
-  receiveCarrier* carrier = new receiveCarrier;
+  receiveCarrier* c = new receiveCarrier;
+
+  napi_value promise;
+  c->status = napi_create_promise(env, &c->_deferred, &promise);
+  REJECT_RETURN;
 
   size_t argc = 1;
   napi_value args[1];
-  status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-  CHECK_STATUS;
+  c->status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+  REJECT_RETURN;
 
-  if (argc != (size_t) 1) NAPI_THROW_ERROR("Receiver must be created with an object containing at least a 'source' property.");
+  if (argc != (size_t) 1) {
+    c->errorMsg = "Receiver must be created with an object containing at least a 'source' property.";
+    c->status = GRANDIOSE_INVALID_ARGS;
+    REJECT_RETURN;
+  }
 
-  status = napi_typeof(env, args[0], &type);
-  CHECK_STATUS;
+  c->status = napi_typeof(env, args[0], &type);
+  REJECT_RETURN;
   bool isArray;
-  status = napi_is_array(env, args[0], &isArray);
-  CHECK_STATUS;
-  if ((type != napi_object) || isArray)
-    NAPI_THROW_ERROR("Single argument must be an object, not an array, containing at least a 'source' property.");
+  c->status = napi_is_array(env, args[0], &isArray);
+  REJECT_RETURN;
+  if ((type != napi_object) || isArray) {
+    c->errorMsg = "Single argument must be an object, not an array, containing at least a 'source' property.";
+    c->status = GRANDIOSE_INVALID_ARGS;
+    REJECT_RETURN;
+  }
 
   napi_value config = args[0];
   napi_value source, colorFormat, bandwidth, allowVideoFields, name;
   // source is an object, not an array, with name and urlAddress
   // convert to a native source
-  status = napi_get_named_property(env, config, "source", &source);
-  printf("Status is %i.\n", status);
-  CHECK_STATUS;
-  status = napi_typeof(env, source, &type);
-  CHECK_STATUS;
-  status = napi_is_array(env, source, &isArray);
-  CHECK_STATUS;
-  if ((type != napi_object) || isArray) NAPI_THROW_ERROR("Source property must be an object and not an array.");
+  c->status = napi_get_named_property(env, config, "source", &source);
+  REJECT_RETURN;
+  c->status = napi_typeof(env, source, &type);
+  REJECT_RETURN;
+  c->status = napi_is_array(env, source, &isArray);
+  REJECT_RETURN;
+  if ((type != napi_object) || isArray) {
+    c->errorMsg = "Source property must be an object and not an array.";
+    c->status = GRANDIOSE_INVALID_ARGS;
+    REJECT_RETURN;
+  }
 
   napi_value checkType;
-  status = napi_get_named_property(env, source, "name", &checkType);
-  CHECK_STATUS;
-  status = napi_typeof(env, checkType, &type);
-  CHECK_STATUS;
-  if (type != napi_string) NAPI_THROW_ERROR("Source property must have a 'name' sub-property that is of type string.");
-  status = napi_get_named_property(env, source, "urlAddress", &checkType);
-  CHECK_STATUS;
-  status = napi_typeof(env, checkType, &type);
-  CHECK_STATUS;
-  if (type != napi_string) NAPI_THROW_ERROR("Source property must have a 'urlAddress' sub-property that is of type string.");
+  c->status = napi_get_named_property(env, source, "name", &checkType);
+  REJECT_RETURN;
+  c->status = napi_typeof(env, checkType, &type);
+  REJECT_RETURN;
+  if (type != napi_string) {
+    c->errorMsg = "Source property must have a 'name' sub-property that is of type string.";
+    c->status = GRANDIOSE_INVALID_ARGS;
+    REJECT_RETURN;
+  }
 
-  carrier->source = new NDIlib_source_t();
-  status = makeNativeSource(env, source, carrier->source);
-  CHECK_STATUS;
+  c->status = napi_get_named_property(env, source, "urlAddress", &checkType);
+  REJECT_RETURN;
+  c->status = napi_typeof(env, checkType, &type);
+  REJECT_RETURN;
+  if (type != napi_string) {
+    c->errorMsg = "Source property must have a 'urlAddress' sub-property that is of type string.";
+    c->status = GRANDIOSE_INVALID_ARGS;
+    REJECT_RETURN;
+  }
 
-  status = napi_get_named_property(env, config, "colorFormat", &colorFormat);
-  CHECK_STATUS;
-  status = napi_typeof(env, colorFormat, &type);
-  CHECK_STATUS;
+  c->source = new NDIlib_source_t();
+  c->status = makeNativeSource(env, source, c->source);
+  REJECT_RETURN;
+
+  c->status = napi_get_named_property(env, config, "colorFormat", &colorFormat);
+  REJECT_RETURN;
+  c->status = napi_typeof(env, colorFormat, &type);
+  REJECT_RETURN;
   if (type != napi_undefined) {
-    if (type != napi_number) NAPI_THROW_ERROR("Color format property must be a number.");
+    if (type != napi_number) {
+      c->errorMsg = "Color format property must be a number.";
+      c->status = GRANDIOSE_INVALID_ARGS;
+      REJECT_RETURN;
+    }
     int32_t enumValue;
-    status = napi_get_value_int32(env, colorFormat, &enumValue);
-    CHECK_STATUS;
+    c->status = napi_get_value_int32(env, colorFormat, &enumValue);
+    REJECT_RETURN;
 
-    carrier->colorFormat = (NDIlib_recv_color_format_e) enumValue;
-    if (!validColorFormat(carrier->colorFormat)) NAPI_THROW_ERROR("Invalid colour format value.");
+    c->colorFormat = (NDIlib_recv_color_format_e) enumValue;
+    if (!validColorFormat(c->colorFormat)) {
+      c->errorMsg = "Invalid colour format value.";
+      c->status = GRANDIOSE_INVALID_ARGS;
+      REJECT_RETURN;
+    }
   }
 
-  status = napi_get_named_property(env, config, "bandwidth", &bandwidth);
-  CHECK_STATUS;
-  status = napi_typeof(env, bandwidth, &type);
-  CHECK_STATUS;
+  c->status = napi_get_named_property(env, config, "bandwidth", &bandwidth);
+  REJECT_RETURN;
+  c->status = napi_typeof(env, bandwidth, &type);
+  REJECT_RETURN;
   if (type != napi_undefined) {
-    if (type != napi_number) NAPI_THROW_ERROR("Bandwidth property must be a number.");
+    if (type != napi_number) {
+      c->errorMsg = "Bandwidth property must be a number.";
+      c->status = GRANDIOSE_INVALID_ARGS;
+      REJECT_RETURN;
+    }
     int32_t enumValue;
-    status = napi_get_value_int32(env, bandwidth, &enumValue);
-    CHECK_STATUS;
+    c->status = napi_get_value_int32(env, bandwidth, &enumValue);
+    REJECT_RETURN;
 
-    carrier->bandwidth = (NDIlib_recv_bandwidth_e) enumValue;
-    if (!validBandwidth(carrier->bandwidth)) NAPI_THROW_ERROR("Invalid bandwidth value.");
+    c->bandwidth = (NDIlib_recv_bandwidth_e) enumValue;
+    if (!validBandwidth(c->bandwidth)) {
+      c->errorMsg = "Invalid bandwidth value.";
+      c->status = GRANDIOSE_INVALID_ARGS;
+      REJECT_RETURN;
+    }
   }
 
-  status = napi_get_named_property(env, config, "allowVideoFields", &allowVideoFields);
-  CHECK_STATUS;
-  status = napi_typeof(env, allowVideoFields, &type);
-  CHECK_STATUS;
+  c->status = napi_get_named_property(env, config, "allowVideoFields", &allowVideoFields);
+  REJECT_RETURN;
+  c->status = napi_typeof(env, allowVideoFields, &type);
+  REJECT_RETURN;
   if (type != napi_undefined) {
-    if (type != napi_boolean) NAPI_THROW_ERROR("Allow video fields property must be a Boolean.");
-    status = napi_get_value_bool(env, allowVideoFields, &carrier->allowVideoFields);
-    CHECK_STATUS;
+    if (type != napi_boolean) {
+      c->errorMsg = "Allow video fields property must be a Boolean.";
+      c->status = GRANDIOSE_INVALID_ARGS;
+      REJECT_RETURN;
+    }
+    c->status = napi_get_value_bool(env, allowVideoFields, &c->allowVideoFields);
+    REJECT_RETURN;
   }
 
-  status = napi_get_named_property(env, config, "name", &name);
-  CHECK_STATUS;
-  status = napi_typeof(env, name, &type);
+  c->status = napi_get_named_property(env, config, "name", &name);
+  REJECT_RETURN;
+  c->status = napi_typeof(env, name, &type);
   if (type != napi_undefined) {
-    if (type != napi_string) NAPI_THROW_ERROR("Optional name property must be a string when present.");
+    if (type != napi_string) {
+      c->errorMsg = "Optional name property must be a string when present.";
+      c->status = GRANDIOSE_INVALID_ARGS;
+      REJECT_RETURN;
+    }
     size_t namel;
-    status = napi_get_value_string_utf8(env, name, nullptr, 0, &namel);
-    CHECK_STATUS;
-    carrier->name = (char *) malloc(namel + 1);
-    status = napi_get_value_string_utf8(env, name, carrier->name, namel + 1, &namel);
-    CHECK_STATUS;
+    c->status = napi_get_value_string_utf8(env, name, nullptr, 0, &namel);
+    REJECT_RETURN;
+    c->name = (char *) malloc(namel + 1);
+    c->status = napi_get_value_string_utf8(env, name, c->name, namel + 1, &namel);
+    REJECT_RETURN;
   }
-
-  napi_value promise;
-  status = napi_create_promise(env, &carrier->_deferred, &promise);
-  CHECK_STATUS;
 
   napi_value resource_name;
-  status = napi_create_string_utf8(env, "Receive", NAPI_AUTO_LENGTH, &resource_name);
-  CHECK_STATUS;
-  status = napi_create_async_work(env, NULL, resource_name, receiveExecute,
-    receiveComplete, carrier, &carrier->_request);
-  CHECK_STATUS;
-  status = napi_queue_async_work(env, carrier->_request);
-  CHECK_STATUS;
+  c->status = napi_create_string_utf8(env, "Receive", NAPI_AUTO_LENGTH, &resource_name);
+  REJECT_RETURN;
+  c->status = napi_create_async_work(env, NULL, resource_name, receiveExecute,
+    receiveComplete, c, &c->_request);
+  REJECT_RETURN;
+  c->status = napi_queue_async_work(env, c->_request);
+  REJECT_RETURN;
 
   return promise;
 }

@@ -41,6 +41,8 @@ napi_status checkArgs(napi_env env, napi_callback_info info, char* methodName,
   napi_value* args, size_t argc, napi_valuetype* types);
 
 // Async error handling
+#define GRANDIOSE_ERROR_START 4000
+#define GRANDIOSE_INVALID_ARGS 4001
 #define GRANDIOSE_OUT_OF_RANGE 4097
 #define GRANDIOSE_ASYNC_FAILURE 4098
 #define GRANDIOSE_BUILD_ERROR 4099
@@ -58,13 +60,14 @@ struct carrier {
   std::string errorMsg;
   long long totalTime;
   napi_deferred _deferred;
-  napi_async_work _request;
+  napi_async_work _request = nullptr;
 };
 
 void tidyCarrier(napi_env env, carrier* c);
 int32_t rejectStatus(napi_env env, carrier* c, char* file, int32_t line);
 
 #define REJECT_STATUS if (rejectStatus(env, c, __FILE__, __LINE__) != GRANDIOSE_SUCCESS) return;
+#define REJECT_RETURN if (rejectStatus(env, c, __FILE__, __LINE__) != GRANDIOSE_SUCCESS) return promise;
 #define FLOATING_STATUS if (status != napi_ok) { \
   printf("Unexpected N-API status not OK in file %s at line %d value %i.\n", \
     __FILE__, __LINE__ - 1, status); \
