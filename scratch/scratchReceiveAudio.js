@@ -21,7 +21,7 @@ async function run() {
   let r = await g.receive({ source: l[0] });
   console.log('>>> RECEIVER >>>', r);
   for ( let x = 0 ; x < 100 ; x++ ) {
-    let a = await r.audio({ audioFormat : g.AUDIO_FORMAT_FLOAT_32_INTERLEAVED });
+    let a = await r.audio({ audioFormat : g.AUDIO_FORMAT_FLOAT_32_SEPARATE });
     console.log('>>> AUDIO >>>', a);
     console.log(a.data.slice(a.channelStrideBytes));
     console.log(a.data.slice(a.channelStrideBytes*2));
