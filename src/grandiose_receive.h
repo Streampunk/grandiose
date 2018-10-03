@@ -23,6 +23,7 @@ napi_value receive(napi_env env, napi_callback_info info);
 napi_value videoReceive(napi_env env, napi_callback_info info);
 napi_value audioReceive(napi_env env, napi_callback_info info);
 napi_value metadataReceive(napi_env env, napi_callback_info info);
+napi_value dataReceive(napi_env env, napi_callback_info info);
 
 struct receiveCarrier : carrier {
   NDIlib_source_t* source = nullptr;
@@ -39,38 +40,21 @@ struct receiveCarrier : carrier {
   }
 };
 
-struct videoCarrier : carrier {
+struct dataCarrier : carrier {
   uint32_t wait = 10000;
   NDIlib_recv_instance_t recv;
+  NDIlib_frame_type_e frameType;
   NDIlib_video_frame_v2_t videoFrame;
-  ~videoCarrier() {}
-};
-
-struct audioCarrier : carrier {
-  uint32_t wait = 10000;
-  NDIlib_recv_instance_t recv;
   NDIlib_audio_frame_v2_t audioFrame;
   NDIlib_audio_frame_interleaved_16s_t audioFrame16s;
   NDIlib_audio_frame_interleaved_32f_t audioFrame32fIlvd;
   int32_t referenceLevel = 20;
   Grandiose_audio_format_e audioFormat = Grandiose_audio_format_float_32_separate;
-  ~audioCarrier() {
+  NDIlib_metadata_frame_t metadataFrame;
+  ~dataCarrier() {
     delete[] audioFrame16s.p_data;
     delete[] audioFrame32fIlvd.p_data;
   }
-};
-
-struct metadataCarrier : carrier {
-  uint32_t wait = 10000;
-  NDIlib_recv_instance_t recv;
-  NDIlib_metadata_frame_t metadataFrame;
-  ~metadataCarrier() {}
-};
-
-struct dataCarrier : carrier {
-  uint32_t wait = 10000;
-  NDIlib_recv_instance_t recv;
-  ~dataCarrier() {}
 };
 
 #endif /* GRANDIOSE_RECEIVE_H */

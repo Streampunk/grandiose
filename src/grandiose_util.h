@@ -64,6 +64,8 @@ napi_status checkArgs(napi_env env, napi_callback_info info, char* methodName,
 #define GRANDIOSE_NOT_FOUND 4040
 #define GRANDIOSE_NOT_VIDEO 4140
 #define GRANDIOSE_NOT_AUDIO 4141
+#define GRANDIOSE_NOT_METADATA 4142
+#define GRANDIOSE_CONNECTION_LOST 4143
 #define GRANDIOSE_SUCCESS 0
 
 struct carrier {

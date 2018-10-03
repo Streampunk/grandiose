@@ -96,6 +96,13 @@ void receiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   c->status = napi_set_named_property(env, result, "metadata", metadataFn);
   REJECT_STATUS;
 
+  napi_value dataFn;
+  c->status = napi_create_function(env, "data", NAPI_AUTO_LENGTH, dataReceive,
+    nullptr, &dataFn);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "data", dataFn);
+  REJECT_STATUS;
+
   napi_value source, name, uri;
   c->status = napi_create_string_utf8(env, c->source->p_ndi_name, NAPI_AUTO_LENGTH, &name);
   REJECT_STATUS;
@@ -279,7 +286,7 @@ napi_value receive(napi_env env, napi_callback_info info) {
 }
 
 void videoReceiveExecute(napi_env env, void* data) {
-  videoCarrier* c = (videoCarrier*) data;
+  dataCarrier* c = (dataCarrier*) data;
 
   switch (NDIlib_recv_capture_v2(c->recv, &c->videoFrame, nullptr, nullptr, c->wait))
   {
@@ -304,7 +311,7 @@ void videoReceiveExecute(napi_env env, void* data) {
 }
 
 void videoReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
-  videoCarrier* c = (videoCarrier*) data;
+  dataCarrier* c = (dataCarrier*) data;
 
   if (asyncStatus != napi_ok) {
     c->status = asyncStatus;
@@ -413,7 +420,7 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
 
 napi_value videoReceive(napi_env env, napi_callback_info info) {
   napi_valuetype type;
-  videoCarrier* c = new videoCarrier;
+  dataCarrier* c = new dataCarrier;
 
   napi_value promise;
   c->status = napi_create_promise(env, &c->_deferred, &promise);
@@ -455,7 +462,7 @@ napi_value videoReceive(napi_env env, napi_callback_info info) {
 }
 
 void audioReceiveExecute(napi_env env, void* data) {
-  audioCarrier* c = (audioCarrier*) data;
+  dataCarrier* c = (dataCarrier*) data;
 
   // printf("Audio receiver executing.\n");
 
@@ -494,7 +501,7 @@ void audioReceiveExecute(napi_env env, void* data) {
 }
 
 void audioReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
-  audioCarrier* c = (audioCarrier*) data;
+  dataCarrier* c = (dataCarrier*) data;
 
   // printf("Audio receiver completing - status %i.\n", c->status);
 
@@ -616,9 +623,11 @@ void audioReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   tidyCarrier(env, c);
 }
 
-napi_value audioReceive(napi_env env, napi_callback_info info) {
+napi_value dataAndAudioReceive(napi_env env, napi_callback_info info,
+    char* resourceName, napi_async_execute_callback execute,
+    napi_async_complete_callback complete) {
   napi_valuetype type;
-  audioCarrier* c = new audioCarrier;
+  dataCarrier* c = new dataCarrier;
 
   napi_value promise;
   c->status = napi_create_promise(env, &c->_deferred, &promise);
@@ -690,10 +699,10 @@ napi_value audioReceive(napi_env env, napi_callback_info info) {
   }
 
   napi_value resource_name;
-  c->status = napi_create_string_utf8(env, "audioReceive", NAPI_AUTO_LENGTH, &resource_name);
+  c->status = napi_create_string_utf8(env, resourceName, NAPI_AUTO_LENGTH, &resource_name);
   REJECT_RETURN;
-  c->status = napi_create_async_work(env, NULL, resource_name, audioReceiveExecute,
-    audioReceiveComplete, c, &c->_request);
+  c->status = napi_create_async_work(env, NULL, resource_name, execute,
+    complete, c, &c->_request);
   REJECT_RETURN;
   c->status = napi_queue_async_work(env, c->_request);
   REJECT_RETURN;
@@ -701,10 +710,15 @@ napi_value audioReceive(napi_env env, napi_callback_info info) {
   return promise;
 }
 
-void metadataReceiveExecute(napi_env env, void* data) {
-  metadataCarrier* c = (metadataCarrier*) data;
+napi_value audioReceive(napi_env env, napi_callback_info info) {
+  return dataAndAudioReceive(env, info, "AudioReceive",
+    audioReceiveExecute, audioReceiveComplete);
+}
 
-  printf("Metadata receiver executing.\n");
+void metadataReceiveExecute(napi_env env, void* data) {
+  dataCarrier* c = (dataCarrier*) data;
+
+  // printf("Metadata receiver executing.\n");
 
   switch (NDIlib_recv_capture_v2(c->recv, nullptr, nullptr, &c->metadataFrame, c->wait))
   {
@@ -728,8 +742,8 @@ void metadataReceiveExecute(napi_env env, void* data) {
 }
 
 void metadataReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
-  metadataCarrier* c = (metadataCarrier*) data;
-  printf("Metadata receiver completing - status %i.\n", c->status);
+  dataCarrier* c = (dataCarrier*) data;
+  // printf("Metadata receiver completing - status %i.\n", c->status);
 
   if (asyncStatus != napi_ok) {
     c->status = asyncStatus;
@@ -782,7 +796,7 @@ void metadataReceiveComplete(napi_env env, napi_status asyncStatus, void* data) 
 
 napi_value metadataReceive(napi_env env, napi_callback_info info) {
   napi_valuetype type;
-  metadataCarrier* c = new metadataCarrier;
+  dataCarrier* c = new dataCarrier;
 
   napi_value promise;
   c->status = napi_create_promise(env, &c->_deferred, &promise);
@@ -824,91 +838,79 @@ napi_value metadataReceive(napi_env env, napi_callback_info info) {
 }
 
 void dataReceiveExecute(napi_env env, void* data) {
+  dataCarrier* c = (dataCarrier*) data;
+
+  // printf("Audio receiver executing.\n");
+  c->frameType = NDIlib_recv_capture_v2(c->recv, &c->videoFrame, &c->audioFrame, &c->metadataFrame, c->wait);
+  switch (c->frameType) {
+
+    // Audio data
+    case NDIlib_frame_type_audio:
+      switch (c->audioFormat) {
+        case Grandiose_audio_format_int_16_interleaved:
+          c->audioFrame16s.reference_level = c->referenceLevel;
+          c->audioFrame16s.p_data = new short[c->audioFrame.no_samples * c->audioFrame.no_channels];
+          NDIlib_util_audio_to_interleaved_16s_v2(&c->audioFrame, &c->audioFrame16s);
+          break;
+        case Grandiose_audio_format_float_32_interleaved:
+          c->audioFrame32fIlvd.p_data = new float[c->audioFrame.no_samples * c->audioFrame.no_channels];
+          NDIlib_util_audio_to_interleaved_32f_v2(&c->audioFrame, &c->audioFrame32fIlvd);
+          break;
+        case Grandiose_audio_format_float_32_separate:
+        default:
+          break;
+      }
+      break;
+
+      // Handle all other types on completion
+      default:
+        break;
+  }
 
 }
 
 void dataReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
+  dataCarrier* c = (dataCarrier*) data;
 
+  if (asyncStatus != napi_ok) {
+    c->status = asyncStatus;
+    c->errorMsg = "Async data payload receive failed to complete.";
+  }
+  REJECT_STATUS;
+
+  switch (c->frameType) {
+    case NDIlib_frame_type_video:
+      videoReceiveComplete(env, asyncStatus, data);
+      break;
+    case NDIlib_frame_type_audio:
+      audioReceiveComplete(env, asyncStatus, data);
+      break;
+    case NDIlib_frame_type_metadata:
+      metadataReceiveComplete(env, asyncStatus, data);
+      break;
+    case NDIlib_frame_type_error:
+      c->errorMsg = "Received error response from NDI data request. Connection lost.";
+      c->status = GRANDIOSE_CONNECTION_LOST;
+      REJECT_STATUS;
+    case NDIlib_frame_type_status_change:
+      napi_value result, param;
+      c->status = napi_create_object(env, &result);
+      REJECT_STATUS;
+      c->status = napi_create_string_utf8(env, "statusChange", NAPI_AUTO_LENGTH, &param);
+      REJECT_STATUS;
+      c->status = napi_set_named_property(env, result, "type", param);
+      REJECT_STATUS;
+
+      napi_status status;
+      status = napi_resolve_deferred(env, c->_deferred, result);
+      FLOATING_STATUS;
+
+      tidyCarrier(env, c);
+      break;
+  }
 }
 
 napi_value dataReceive(napi_env env, napi_callback_info info) {
-
+  return dataAndAudioReceive(env, info, "DataReceive",
+    dataReceiveExecute, dataReceiveComplete);
 }
-
-/* napi_value receive_old(napi_env env, napi_callback_info info) {
-  napi_status status;
-  napi_value result;
-
-  if (!NDIlib_initialize()) return 0;
-
-	// Create a finder
-	NDIlib_find_instance_t pNDI_find = NDIlib_find_create_v2();
-	if (!pNDI_find) return 0;
-
-	// Wait until there is one source
-	uint32_t no_sources = 0;
-	const NDIlib_source_t* p_sources = NULL;
-  int count = 0;
-	while ((!no_sources) || (count++ < 10))
-	{	// Wait until the sources on the nwtork have changed
-		printf("Looking for sources ...\n");
-		NDIlib_find_wait_for_sources(pNDI_find, 5000);
-		p_sources = NDIlib_find_get_current_sources(pNDI_find, &no_sources);
-    printf("Found %u sources, first is %s.\n", no_sources, p_sources[0].p_ndi_name);
-	}
-
-  printf("Found %u sources, first is %s.\n", no_sources, p_sources[0].p_ndi_name);
-
-	// We now have at least one source, so we create a receiver to look at it.
-	NDIlib_recv_instance_t pNDI_recv = NDIlib_recv_create_v3();
-	if (!pNDI_recv) return 0;
-
-  printf("Got receive instance.\n");
-	// Connect to our sources
-	NDIlib_recv_connect(pNDI_recv, p_sources + 0);
-
-  printf("Connected to receive instance.\n");
-	// Destroy the NDI finder. We needed to have access to the pointers to p_sources[0]
-	NDIlib_find_destroy(pNDI_find);
-
-  printf("Killed the finder. Starting capture.\n");
-	// Run for one minute
-	using namespace std::chrono;
-	for (const auto start = high_resolution_clock::now(); high_resolution_clock::now() - start < seconds(10);)
-	{	// The descriptors
-		NDIlib_video_frame_v2_t video_frame;
-		NDIlib_audio_frame_v2_t audio_frame;
-
-		switch (NDIlib_recv_capture_v2(pNDI_recv, &video_frame, &audio_frame, nullptr, 5000))
-		{	// No data
-			case NDIlib_frame_type_none:
-				printf("No data received.\n");
-				break;
-
-			// Video data
-			case NDIlib_frame_type_video:
-				printf("Video data received (%dx%d at %d/%d).\n", video_frame.xres, video_frame.yres,
-          video_frame.frame_rate_N, video_frame.frame_rate_D);
-				NDIlib_recv_free_video_v2(pNDI_recv, &video_frame);
-				break;
-
-			// Audio data
-			case NDIlib_frame_type_audio:
-				printf("Audio data received (%d samples).\n", audio_frame.no_samples);
-				NDIlib_recv_free_audio_v2(pNDI_recv, &audio_frame);
-				break;
-		}
-	}
-
-	// Destroy the receiver
-	NDIlib_recv_destroy(pNDI_recv);
-
-	// Not required, but nice
-	NDIlib_destroy();
-
-
-  status = napi_get_undefined(env, &result);
-  CHECK_STATUS;
-
-  return result;
-} */
