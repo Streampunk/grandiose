@@ -9,7 +9,7 @@ NDI(tm) is a realisation of a grand vision for what IP media streams should and 
 
 ## Installation
 
-Grandiose only supports Windows x64 platforms at this time. Future platforms may be added in the future.
+Grandiose only supports Windows x64 platforms at this time. Other platforms may be added in the future.
 
 Install [Node.js](http://nodejs.org/) for your platform. This software has been developed against the long term stable (LTS) release.
 
@@ -148,7 +148,7 @@ Here is the output associated with a video frame created by an NDI(tm) test patt
   data: <Buffer 80 10 80 10 80 10 80 10 ... > }
 ```
 
-NDI presents 8-bit integer data for video.
+NDI presents 8-bit integer data for video, meaning samples are byte-aligned.
 
 Note that the returned promise may be rejected if the request times out or another error occurs.
 
@@ -184,7 +184,7 @@ An example of an audio frame resolved from this promise is:
   channelStrideInBytes: 9600, // number of bytes per channel in buffer
   timestamp: [ 1538578787, 132614500 ], // PTP timestamp
   timecode: [ 0, 800000000 ], // timecode as PTP value
-  data: <Buffer 00 00 00 00 00 00 00 00 89 0a 89 0a 89 0a 89 0 ... > }
+  data: <Buffer 00 00 00 00 00 00 00 00 89 10 89 10 89 10 89 ... > }
 ```
 
 #### Metadata
@@ -195,7 +195,7 @@ Follows a similar pattern to video and audio, waiting for any metadata messages 
 let metadataFrame = await receiver.metadata();
 ```
 
-Result is an object with a data property that is string containing the metadata, expected to be a short XML document.
+The result is an object with a `data` property that is string containing the metadata, expected to be a short XML document.
 
 #### Next available data
 
