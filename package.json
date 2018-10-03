@@ -1,6 +1,6 @@
 {
   "name": "grandiose",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Node.JS native bindings to the Newtek NDI SDK.",
   "main": "index.js",
   "scripts": {
