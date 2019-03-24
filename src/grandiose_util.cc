@@ -22,6 +22,20 @@
 #include "grandiose_util.h"
 #include "node_api.h"
 
+/*
+ * Got this from https://codereview.stackexchange.com/q/164322
+ * Because it's a non-standard function
+ */
+char* itoa(int number, char string_out [], int width) {
+  int i = width;
+  do {
+    string_out[i] = (number > 0) ? number % 10 + '0' : ' ';
+    number /= 10;
+  } while ((i--) != 0);
+  string_out[width + 1] = '\0';
+  return string_out;
+}
+
 napi_status checkStatus(napi_env env, napi_status status,
   const char* file, uint32_t line) {
 
