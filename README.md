@@ -7,21 +7,28 @@ This module will allow a Node.JS program to find, receive and send NDI(tm) video
 
 NDI(tm) is a realisation of a grand vision for what IP media streams should and can be, hence a steampunk themed name of _gra-NDI-ose_.
 
-## Installation
+# Installation
 
-Grandiose only supports Windows x64 platforms at this time. Future platforms may be added in the future.
+Grandiose supports Windows x64, Mac OS x64 and Linux platforms at this time. Future platforms may be added in the future.
 
-Install [Node.js](http://nodejs.org/) for your platform. This software has been developed against the long term stable (LTS) release.
+Install [Node.js](http://nodejs.org/) for your platform. This software has been developed against the long term stable (LTS) release. Depending on OS, it can be necessary to perform installation of third party software before using Grandiose. Read the Prerequisites section below.
 
+## Prerequisites
+
+### Windows
 On Windows, the NDI(tm) DLL requires that the Visual Studio 2013 C run-times are installed, available from:
 
 https://www.microsoft.com/en-us/download/details.aspx?id=40784
 
+## Easy install via NPM or yarn
 Grandiose is designed to be `require`d to use from your own application to provide async processing. For example:
+```
+npm install --save grandiose
+# or
+yarn add -d grandiose
+```
 
-    npm install --save grandiose
-
-## Using grandiose
+# Using grandiose
 
 ### Finding streams
 
