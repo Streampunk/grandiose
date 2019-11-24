@@ -3,11 +3,11 @@
 // NOTE : The following MIT license applies to this file ONLY and not to the SDK as a whole. Please review the SDK documentation 
 // for the description of the full license terms, which are also provided in the file "NDI License Agreement.pdf" within the SDK or 
 // online at http://new.tk/ndisdk_license/. Your use of any part of this SDK is acknowledgment that you agree to the SDK license 
-// terms. The full NDI SDK may be downloaded at https://www.newtek.com/ndi/sdk/
+// terms. The full NDI SDK may be downloaded at http://ndi.tv/
 //
-//***********************************************************************************************************************************************
+//*************************************************************************************************************************************
 // 
-// Copyright(c) 2014-2018 NewTek, inc
+// Copyright(c) 2014-2019 NewTek, inc
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation 
 // files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, 
@@ -21,39 +21,38 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-//***********************************************************************************************************************************************
+//*************************************************************************************************************************************
 
-//**************************************************************************************************************************
 // Structures and type definitions required by NDI sending
 // The reference to an instance of the sender
 typedef void* NDIlib_send_instance_t;
 
 // The creation structure that is used when you are creating a sender
 typedef struct NDIlib_send_create_t
-{	// The name of the NDI source to create. This is a nullptr terminated UTF8 string.
+{	// The name of the NDI source to create. This is a NULL terminated UTF8 string.
 	const char* p_ndi_name;
 
-	// What groups should this source be part of. nullptr means default.
+	// What groups should this source be part of. NULL means default.
 	const char* p_groups;
 
 	// Do you want audio and video to "clock" themselves. When they are clocked then 
 	// by adding video frames, they will be rate limited to match the current frame-rate
 	// that you are submitting at. The same is true for audio. In general if you are submitting
 	// video and audio off a single thread then you should only clock one of them (video is
-	// probably the better of the two to clock off). If you are submtiting audio and video
+	// probably the better of the two to clock off). If you are submitting audio and video
 	// of separate threads then having both clocked can be useful.
 	bool clock_video, clock_audio;
 
 #if NDILIB_CPP_DEFAULT_CONSTRUCTORS
-	NDIlib_send_create_t(const char* p_ndi_name_ = nullptr, const char* p_groups_ = nullptr, bool clock_video_ = true, bool clock_audio_ = true);
+	NDIlib_send_create_t(const char* p_ndi_name_ = NULL, const char* p_groups_ = NULL, bool clock_video_ = true, bool clock_audio_ = true);
 #endif // NDILIB_CPP_DEFAULT_CONSTRUCTORS
 
 } NDIlib_send_create_t;
 
-// Create a new sender instance. This will return nullptr if it fails. If you specify leave p_create_settings null then 
+// Create a new sender instance. This will return NULL if it fails. If you specify leave p_create_settings null then 
 // the sender will be created with default settings. 
 PROCESSINGNDILIB_API
-NDIlib_send_instance_t NDIlib_send_create(const NDIlib_send_create_t* p_create_settings NDILIB_CPP_DEFAULT_VALUE(nullptr) );
+NDIlib_send_instance_t NDIlib_send_create(const NDIlib_send_create_t* p_create_settings NDILIB_CPP_DEFAULT_VALUE(NULL) );
 
 // This will destroy an existing finder instance.
 PROCESSINGNDILIB_API
@@ -72,10 +71,10 @@ void NDIlib_send_send_video_v2(NDIlib_send_instance_t p_instance, const NDIlib_v
 // This call is particularly beneficial when processing BGRA video since it allows any color conversion, compression
 // and network sending to all be done on separate threads from your main rendering thread. 
 //
-// Synchronozing events are :
+// Synchronizing events are :
 // - a call to NDIlib_send_send_video
 // - a call to NDIlib_send_send_video_async with another frame to be sent
-// - a call to NDIlib_send_send_video with p_video_data=nullptr
+// - a call to NDIlib_send_send_video with p_video_data=NULL
 // - a call to NDIlib_send_destroy
 PROCESSINGNDILIB_API
 void NDIlib_send_send_video_async_v2(NDIlib_send_instance_t p_instance, const NDIlib_video_frame_v2_t* p_video_data);
@@ -83,6 +82,10 @@ void NDIlib_send_send_video_async_v2(NDIlib_send_instance_t p_instance, const ND
 // This will add an audio frame
 PROCESSINGNDILIB_API
 void NDIlib_send_send_audio_v2(NDIlib_send_instance_t p_instance, const NDIlib_audio_frame_v2_t* p_audio_data);
+
+// This will add an audio frame
+PROCESSINGNDILIB_API
+void NDIlib_send_send_audio_v3(NDIlib_send_instance_t p_instance, const NDIlib_audio_frame_v3_t* p_audio_data);
 
 // This will add a metadata frame
 PROCESSINGNDILIB_API
@@ -92,7 +95,7 @@ void NDIlib_send_send_metadata(NDIlib_send_instance_t p_instance, const NDIlib_m
 PROCESSINGNDILIB_API
 NDIlib_frame_type_e NDIlib_send_capture(
 	NDIlib_send_instance_t p_instance,   // The instance data
-	NDIlib_metadata_frame_t* p_metadata, // The metadata received (can be nullptr)
+	NDIlib_metadata_frame_t* p_metadata, // The metadata received (can be NULL)
 	uint32_t timeout_in_ms);             // The amount of time in milliseconds to wait for data.
 
 // Free the buffers returned by capture for metadata
@@ -122,6 +125,10 @@ void NDIlib_send_add_connection_metadata(NDIlib_send_instance_t p_instance, cons
 
 // This will assign a new fail-over source for this video source. What this means is that if this video source was to fail
 // any receivers would automatically switch over to use this source, unless this source then came back online. You can specify
-// nullptr to clear the source.
+// NULL to clear the source.
 PROCESSINGNDILIB_API
 void NDIlib_send_set_failover(NDIlib_send_instance_t p_instance, const NDIlib_source_t* p_failover_source);
+
+// Retrieve the source information for the given sender instance.  This pointer is valid until NDIlib_send_destroy is called.
+PROCESSINGNDILIB_API
+const NDIlib_source_t* NDIlib_send_get_source_name(NDIlib_send_instance_t p_instance);
