@@ -30,8 +30,7 @@
             ['target_arch=="x64"', {
               # "libraries": ['-L/lib/mac_x64', '-lndi']
               "link_settings": {
-                "libraries": [ "libndi.4.dylib" ],
-                "library_dirs": [ "lib/mac_x64" ]
+                "libraries": [ "-Wl,-rpath,./lib/mac_x64" ],
               },
             }]
           ],
