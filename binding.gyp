@@ -30,6 +30,7 @@
             ['target_arch=="x64"', {
                 # "libraries": [ "-Llib/mac_x64" ],
               "libraries": [ 
+                "-Wl,-rpath,@loader_path/../Resources/app.asar.unpacked/node_modules/grandiose/lib/mac_x64/libndi.4.dylib"
                 "../lib/mac_x64/libndi.4.dylib"
               ],
               # "link_settings": {
