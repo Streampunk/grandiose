@@ -28,18 +28,19 @@
         ['OS=="mac"', {
           'conditions': [
             ['target_arch=="x64"', {
-              # "libraries": ['-L/lib/mac_x64', '-lndi']
+              "libraries": [ "-Wl,-rpath,./build/Release/" ],
               "link_settings": {
-                "libraries": [ "-Wl,-rpath,./lib/mac_x64" ],
+                "libraries": [ "libndi.4.dylib" ],
+                "library_dirs": [ "lib/mac_x64" ]
               },
             }]
           ],
-            "copies": [{
-              "destination": "build/Release",
-              "files": [
-                "lib/mac_x64/libndi.4.dylib"
-              ]
-            }]
+          "copies": [{
+            "destination": "build/Release",
+            "files": [
+              "lib/mac_x64/libndi.4.dylib"
+            ]
+          }]
         }],
         ['OS=="linux"', {
           'conditions': [
