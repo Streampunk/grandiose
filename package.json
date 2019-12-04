@@ -1,6 +1,6 @@
 {
   "name": "grandiose",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Node.JS native bindings to the Newtek NDI SDK.",
   "main": "index.js",
   "scripts": {
@@ -25,7 +25,7 @@
   "homepage": "https://github.com/Streampunk/grandiose#readme",
   "gypfile": true,
   "dependencies": {
-    "bindings": "^1.3.0"
+    "bindings": "^1.5.0"
   },
   "devDependencies": {
     "segfault-handler": "^1.0.0"
