@@ -28,19 +28,29 @@
         ['OS=="mac"', {
           'conditions': [
             ['target_arch=="x64"', {
-                # "libraries": [ "-Llib/mac_x64" ],
-              "libraries": [ 
-                "-Wl,-rpath,@loader_path/../Resources/app.asar.unpacked/node_modules/grandiose/lib/mac_x64/libndi.4.dylib"
-                "../lib/mac_x64/libndi.4.dylib"
-              ],
-              # "link_settings": {
-              #   "libraries": [ "-Wl,-rpath,./lib/mac_x64" ],
-                # "library_dirs": [ 'lib/mac_x64' ]
-                # "library_dirs": [ '-Wl,-rpath,@loader_path/lib/mac_x64' ]
-              #   "libraries": [ "libndi.4.dylib" ],
-                # "library_dirs": [ "-Wl,-rpath,./lib/mac_x64" ]
-              #   "library_dirs": [ "-Wl,-rpath='$${ORIGIN}/../lib/mac_x64'" ]
-              # },
+              'xcode_settings': {
+                'OTHER_CPLUSPLUSFLAGS': [
+                  '-std=c++11',
+                  '-stdlib=libc++',
+                  '-fexceptions'
+                ],
+                'OTHER_LDFLAGS': [
+                  "-Wl,-rpath,<@(module_root_dir)/build/Release"
+                ]
+              },
+              "link_settings": {
+                "libraries": [
+                  "<(module_root_dir)/build/Release/libndi.4.dylib"
+                ],
+                "copies": [
+                  {
+                    "destination": "build/Release/",
+                    "files": [
+                      "<!@(ls -1 lib/mac_x64/libndi.4.dylib)"
+                    ]
+                  }
+                ]
+              },
             }]
           ],
           # "copies": [{
