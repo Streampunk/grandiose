@@ -30,7 +30,6 @@ struct findCarrier : carrier {
   const NDIlib_source_t* sources;
   ~findCarrier() {
     if (find != nullptr) {
-      printf("Destroying find carrier.\n");
       NDIlib_find_destroy(find);
     }
   };
