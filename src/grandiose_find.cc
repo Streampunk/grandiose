@@ -13,6 +13,7 @@
   limitations under the License.
 */
 
+#include <stddef.h>
 #include <Processing.NDI.Lib.h>
 
 #ifdef _WIN32
@@ -92,13 +93,13 @@ napi_value find(napi_env env, napi_callback_info info) {
 
   NDIlib_find_create_t find_create;
   find_create.show_local_sources = true;
-  find_create.p_groups = nullptr;
-  find_create.p_extra_ips = nullptr;
+  find_create.p_groups = NULL;
+  find_create.p_extra_ips = NULL;
 
   size_t argc = 2;
   napi_value args[2];
 
-  c->status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+  c->status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
   REJECT_RETURN;
   if (argc >= 1) {
     c->status = napi_typeof(env, args[0], &type);
@@ -121,7 +122,7 @@ napi_value find(napi_env env, napi_callback_info info) {
         switch (type) {
           case napi_string:
             size_t len;
-            c->status = napi_get_value_string_utf8(env, property, nullptr, 0, &len);
+            c->status = napi_get_value_string_utf8(env, property, NULL, 0, &len);
             REJECT_RETURN;
             find_create.p_groups = (const char *) malloc(len + 1);
             c->status = napi_get_value_string_utf8(env, property,
@@ -139,7 +140,7 @@ napi_value find(napi_env env, napi_callback_info info) {
         switch (type) {
           case napi_string:
             size_t len;
-            c->status =  napi_get_value_string_utf8(env, property, nullptr, 0, &len);
+            c->status =  napi_get_value_string_utf8(env, property, NULL, 0, &len);
             REJECT_RETURN;
             find_create.p_extra_ips = (const char *) malloc(len + 1);
             c->status = napi_get_value_string_utf8(env, property,
@@ -180,8 +181,8 @@ napi_value find(napi_env env, napi_callback_info info) {
 
 // Make a native source object from components of a source object
 napi_status makeNativeSource(napi_env env, napi_value source, NDIlib_source_t *result) {
-  const char* name = nullptr;
-  const char* url = nullptr;
+  const char* name = NULL;
+  const char* url = NULL;
   napi_status status;
   napi_valuetype type;
   napi_value namev, urlv;
@@ -195,7 +196,7 @@ napi_status makeNativeSource(napi_env env, napi_value source, NDIlib_source_t *r
   status = napi_typeof(env, namev, &type);
   PASS_STATUS;
   if (type == napi_string) {
-    status = napi_get_value_string_utf8(env, namev, nullptr, 0, &namel);
+    status = napi_get_value_string_utf8(env, namev, NULL, 0, &namel);
     PASS_STATUS;
     name = (char *) malloc(namel + 1);
     status = napi_get_value_string_utf8(env, namev, (char*) name, namel + 1, &namel);
@@ -205,7 +206,7 @@ napi_status makeNativeSource(napi_env env, napi_value source, NDIlib_source_t *r
   status = napi_typeof(env, urlv, &type);
   PASS_STATUS;
   if (type == napi_string) {
-    status = napi_get_value_string_utf8(env, urlv, nullptr, 0, &urll);
+    status = napi_get_value_string_utf8(env, urlv, NULL, 0, &urll);
     PASS_STATUS;
     url = (char *) malloc(urll + 1);
     status = napi_get_value_string_utf8(env, urlv, (char*) url, urll + 1, &urll);

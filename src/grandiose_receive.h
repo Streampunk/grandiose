@@ -26,15 +26,15 @@ napi_value metadataReceive(napi_env env, napi_callback_info info);
 napi_value dataReceive(napi_env env, napi_callback_info info);
 
 struct receiveCarrier : carrier {
-  NDIlib_source_t* source = nullptr;
+  NDIlib_source_t* source = NULL;
   NDIlib_recv_color_format_e colorFormat = NDIlib_recv_color_format_fastest;
   NDIlib_recv_bandwidth_e bandwidth = NDIlib_recv_bandwidth_highest;
   bool allowVideoFields = true;
-  char* name = nullptr;
+  char* name = NULL;
   NDIlib_recv_instance_t recv;
   ~receiveCarrier() {
     free(name);
-    if (source != nullptr) {
+    if (source != NULL) {
       delete source;
     }
   }

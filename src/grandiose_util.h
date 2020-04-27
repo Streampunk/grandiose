@@ -38,7 +38,7 @@ typedef enum Grandiose_audio_format_e {
 #define DECLARE_NAPI_METHOD(name, func) { name, 0, func, 0, 0, 0, napi_default, 0 }
 
 // Handling NAPI errors - use "napi_status status;" where used
-#define CHECK_STATUS if (checkStatus(env, status, __FILE__, __LINE__ - 1) != napi_ok) return nullptr
+#define CHECK_STATUS if (checkStatus(env, status, __FILE__, __LINE__ - 1) != napi_ok) return NULL
 #define PASS_STATUS if (status != napi_ok) return status
 
 napi_status checkStatus(napi_env env, napi_status status,
@@ -70,12 +70,12 @@ napi_status checkArgs(napi_env env, napi_callback_info info, char* methodName,
 
 struct carrier {
   virtual ~carrier() {}
-  napi_ref passthru = nullptr;
+  napi_ref passthru = NULL;
   int32_t status = GRANDIOSE_SUCCESS;
   std::string errorMsg;
   long long totalTime;
   napi_deferred _deferred;
-  napi_async_work _request = nullptr;
+  napi_async_work _request = NULL;
 };
 
 void tidyCarrier(napi_env env, carrier* c);
@@ -91,8 +91,8 @@ int32_t rejectStatus(napi_env env, carrier* c, char* file, int32_t line);
 #define NAPI_THROW_ERROR(msg) { \
   char errorMsg[100]; \
   sprintf(errorMsg, msg); \
-  napi_throw_error(env, nullptr, errorMsg); \
-  return nullptr; \
+  napi_throw_error(env, NULL, errorMsg); \
+  return NULL; \
 }
 
 #define REJECT_ERROR(msg, status) { \

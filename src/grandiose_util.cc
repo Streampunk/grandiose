@@ -16,6 +16,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <chrono>
 #include <string>
 #include <Processing.NDI.Lib.h>
@@ -91,14 +92,14 @@ napi_status checkArgs(napi_env env, napi_callback_info info, char* methodName,
   napi_status status;
 
   size_t realArgc = argc;
-  status = napi_get_cb_info(env, info, &realArgc, args, nullptr, nullptr);
+  status = napi_get_cb_info(env, info, &realArgc, args, NULL, NULL);
   if (status != napi_ok) return status;
 
   if (realArgc != argc) {
     char errorMsg[100];
     sprintf(errorMsg, "For method %s, expected %zi arguments and got %zi.",
       methodName, argc, realArgc);
-    napi_throw_error(env, nullptr, errorMsg);
+    napi_throw_error(env, NULL, errorMsg);
     return napi_pending_exception;
   }
 
@@ -110,7 +111,7 @@ napi_status checkArgs(napi_env env, napi_callback_info info, char* methodName,
       char errorMsg[100];
       sprintf(errorMsg, "For method %s argument %i, expected type %s and got %s.",
         methodName, x + 1, getNapiTypeName(types[x]), getNapiTypeName(t));
-      napi_throw_error(env, nullptr, errorMsg);
+      napi_throw_error(env, NULL, errorMsg);
       return napi_pending_exception;
     }
   }
@@ -121,11 +122,11 @@ napi_status checkArgs(napi_env env, napi_callback_info info, char* methodName,
 
 void tidyCarrier(napi_env env, carrier* c) {
   napi_status status;
-  if (c->passthru != nullptr) {
+  if (c->passthru != NULL) {
     status = napi_delete_reference(env, c->passthru);
     FLOATING_STATUS;
   }
-  if (c->_request != nullptr) {
+  if (c->_request != NULL) {
     status = napi_delete_async_work(env, c->_request);
     FLOATING_STATUS;
   }

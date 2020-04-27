@@ -13,6 +13,7 @@
   limitations under the License.
 */
 
+#include <stddef.h>
 #include <chrono>
 #include <Processing.NDI.Lib.h>
 #include <inttypes.h>
@@ -42,7 +43,7 @@ void receiveExecute(napi_env env, void* data) {
   receiveConfig.color_format = c->colorFormat;
   receiveConfig.bandwidth = c->bandwidth;
   receiveConfig.allow_video_fields = c->allowVideoFields;
-  receiveConfig.p_ndi_name = c->name;
+  receiveConfig.p_ndi_recv_name = c->name;
 
   c->recv = NDIlib_recv_create_v3(&receiveConfig);
   if (!c->recv) {
@@ -70,35 +71,35 @@ void receiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   REJECT_STATUS;
 
   napi_value embedded;
-  c->status = napi_create_external(env, c->recv, finalizeReceive, nullptr, &embedded);
+  c->status = napi_create_external(env, c->recv, finalizeReceive, NULL, &embedded);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "embedded", embedded);
   REJECT_STATUS;
 
   napi_value videoFn;
   c->status = napi_create_function(env, "video", NAPI_AUTO_LENGTH, videoReceive,
-    nullptr, &videoFn);
+    NULL, &videoFn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "video", videoFn);
   REJECT_STATUS;
 
   napi_value audioFn;
   c->status = napi_create_function(env, "audio", NAPI_AUTO_LENGTH, audioReceive,
-    nullptr, &audioFn);
+    NULL, &audioFn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "audio", audioFn);
   REJECT_STATUS;
 
   napi_value metadataFn;
   c->status = napi_create_function(env, "metadata", NAPI_AUTO_LENGTH, metadataReceive,
-    nullptr, &metadataFn);
+    NULL, &metadataFn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "metadata", metadataFn);
   REJECT_STATUS;
 
   napi_value dataFn;
   c->status = napi_create_function(env, "data", NAPI_AUTO_LENGTH, dataReceive,
-    nullptr, &dataFn);
+    NULL, &dataFn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "data", dataFn);
   REJECT_STATUS;
@@ -135,7 +136,7 @@ void receiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   c->status = napi_set_named_property(env, result, "allowVideoFields", allowVideoFields);
   REJECT_STATUS;
 
-  if (c->name != nullptr) {
+  if (c->name != NULL) {
     c->status = napi_create_string_utf8(env, c->name, NAPI_AUTO_LENGTH, &name);
     REJECT_STATUS;
     c->status = napi_set_named_property(env, result, "name", name);
@@ -159,7 +160,7 @@ napi_value receive(napi_env env, napi_callback_info info) {
 
   size_t argc = 1;
   napi_value args[1];
-  c->status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+  c->status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
   REJECT_RETURN;
 
   if (argc != (size_t) 1) REJECT_ERROR_RETURN(
@@ -266,7 +267,7 @@ napi_value receive(napi_env env, napi_callback_info info) {
       "Optional name property must be a string when present.",
       GRANDIOSE_INVALID_ARGS);
     size_t namel;
-    c->status = napi_get_value_string_utf8(env, name, nullptr, 0, &namel);
+    c->status = napi_get_value_string_utf8(env, name, NULL, 0, &namel);
     REJECT_RETURN;
     c->name = (char *) malloc(namel + 1);
     c->status = napi_get_value_string_utf8(env, name, c->name, namel + 1, &namel);
@@ -288,7 +289,7 @@ napi_value receive(napi_env env, napi_callback_info info) {
 void videoReceiveExecute(napi_env env, void* data) {
   dataCarrier* c = (dataCarrier*) data;
 
-  switch (NDIlib_recv_capture_v2(c->recv, &c->videoFrame, nullptr, nullptr, c->wait))
+  switch (NDIlib_recv_capture_v2(c->recv, &c->videoFrame, NULL, NULL, c->wait))
   {
     case NDIlib_frame_type_none:
       printf("No data received.\n");
@@ -395,7 +396,7 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   c->status = napi_set_named_property(env, result, "lineStrideBytes", param);
   REJECT_STATUS;
 
-  if (c->videoFrame.p_metadata != nullptr) {
+  if (c->videoFrame.p_metadata != NULL) {
     c->status = napi_create_string_utf8(env, c->videoFrame.p_metadata, NAPI_AUTO_LENGTH, &param);
     REJECT_STATUS;
     c->status = napi_set_named_property(env, result, "metadata", param);
@@ -404,7 +405,7 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
 
   c->status = napi_create_buffer_copy(env,
     c->videoFrame.line_stride_in_bytes * c->videoFrame.yres,
-    (void*) c->videoFrame.p_data, nullptr, &param);
+    (void*) c->videoFrame.p_data, NULL, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "data", param);
   REJECT_STATUS;
@@ -429,7 +430,7 @@ napi_value videoReceive(napi_env env, napi_callback_info info) {
   size_t argc = 1;
   napi_value args[1];
   napi_value thisValue;
-  c->status = napi_get_cb_info(env, info, &argc, args, &thisValue, nullptr);
+  c->status = napi_get_cb_info(env, info, &argc, args, &thisValue, NULL);
   REJECT_RETURN;
 
   napi_value recvValue;
@@ -466,7 +467,7 @@ void audioReceiveExecute(napi_env env, void* data) {
 
   // printf("Audio receiver executing.\n");
 
-  switch (NDIlib_recv_capture_v2(c->recv, nullptr, &c->audioFrame, nullptr, c->wait))
+  switch (NDIlib_recv_capture_v2(c->recv, NULL, &c->audioFrame, NULL, c->wait))
   {
     case NDIlib_frame_type_none:
       printf("No data received.\n");
@@ -586,7 +587,7 @@ void audioReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   c->status = napi_set_named_property(env, result, "timecode", param);
   REJECT_STATUS;
 
-  if (c->audioFrame.p_metadata != nullptr) {
+  if (c->audioFrame.p_metadata != NULL) {
     c->status = napi_create_string_utf8(env, c->audioFrame.p_metadata, NAPI_AUTO_LENGTH, &param);
     REJECT_STATUS;
     c->status = napi_set_named_property(env, result, "metadata", param);
@@ -608,7 +609,7 @@ void audioReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   }
   c->status = napi_create_buffer_copy(env,
     (c->audioFrame.channel_stride_in_bytes / factor) * c->audioFrame.no_channels,
-    rawFloats, nullptr, &param);
+    rawFloats, NULL, &param);
   REJECT_STATUS;
 
   c->status = napi_set_named_property(env, result, "data", param);
@@ -636,7 +637,7 @@ napi_value dataAndAudioReceive(napi_env env, napi_callback_info info,
   size_t argc = 2;
   napi_value args[2];
   napi_value thisValue;
-  c->status = napi_get_cb_info(env, info, &argc, args, &thisValue, nullptr);
+  c->status = napi_get_cb_info(env, info, &argc, args, &thisValue, NULL);
   REJECT_RETURN;
 
   napi_value recvValue;
@@ -720,7 +721,7 @@ void metadataReceiveExecute(napi_env env, void* data) {
 
   // printf("Metadata receiver executing.\n");
 
-  switch (NDIlib_recv_capture_v2(c->recv, nullptr, nullptr, &c->metadataFrame, c->wait))
+  switch (NDIlib_recv_capture_v2(c->recv, NULL, NULL, &c->metadataFrame, c->wait))
   {
     case NDIlib_frame_type_none:
       printf("No data received.\n");
@@ -805,7 +806,7 @@ napi_value metadataReceive(napi_env env, napi_callback_info info) {
   size_t argc = 1;
   napi_value args[1];
   napi_value thisValue;
-  c->status = napi_get_cb_info(env, info, &argc, args, &thisValue, nullptr);
+  c->status = napi_get_cb_info(env, info, &argc, args, &thisValue, NULL);
   REJECT_RETURN;
 
   napi_value recvValue;
