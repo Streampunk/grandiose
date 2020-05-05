@@ -4,9 +4,11 @@ const grandiose = require('./index')
 console.log(grandiose.version())
 console.log('Is CPU supported?', grandiose.isSupportedCPU())
 
+const timeout = 5000; // Optional timeout, default is 10000ms
+
 grandiose.find({
 	// Should sources on the same system be found?
-	showLocalSources: true,
+	showLocalSources: true
 })
 	.then(async sources => {
 		if (!sources.length) {
@@ -20,7 +22,6 @@ grandiose.find({
 
 		let receiver = await grandiose.receive({ source: source })
 
-		let timeout = 5000; // Optional timeout, default is 10000ms
 		for (let x = 0; x < 10; x++) {
 			try {
 				let videoFrame = await receiver.video(timeout)
