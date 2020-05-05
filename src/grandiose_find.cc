@@ -125,8 +125,13 @@ napi_value find(napi_env env, napi_callback_info info) {
             c->status = napi_get_value_string_utf8(env, property, NULL, 0, &len);
             REJECT_RETURN;
             find_create.p_groups = (const char *) malloc(len + 1);
-            c->status = napi_get_value_string_utf8(env, property,
-              (char *) find_create.p_groups, len + 1, &len);
+            c->status = napi_get_value_string_utf8(
+              env, 
+              property,
+              (char *) find_create.p_groups, 
+              len + 1, 
+              &len
+            );
             REJECT_RETURN;
             break;
           default:
