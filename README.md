@@ -15,6 +15,12 @@ Install [Node.js](http://nodejs.org/) for your platform. This software has been 
 
 ## Prerequisites
 
+### Mac
+Install xcode command-line tools:
+```
+xcode-select --install
+```
+
 ### Windows
 On Windows, the NDI(tm) DLL requires that the Visual Studio 2013 C run-times are installed, available from:
 
