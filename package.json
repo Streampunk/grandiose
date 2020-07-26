@@ -1,14 +1,14 @@
 {
   "name": "grandiose",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Node.JS native bindings to the Newtek NDI SDK.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "install": "node-pre-gyp install --fallback-to-build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Streampunk/grandiose.git"
+    "url": "git+https://github.com/AlexK-99/grandiose.git"
   },
   "keywords": [
     "Newtek",
@@ -20,14 +20,18 @@
   "author": "Streampunk Media <furnace@streampunk.media> (http://www.streampunk.media)",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/Streampunk/grandiose/issues"
+    "url": "https://github.com/AlexK-99/grandiose"
   },
-  "homepage": "https://github.com/Streampunk/grandiose#readme",
+  "homepage": "https://github.com/AlexK-99/grandiose#readme",
   "gypfile": true,
   "dependencies": {
-    "bindings": "^1.5.0"
+    "node-pre-gyp": "0.15.0"
   },
-  "devDependencies": {
-    "segfault-handler": "^1.0.0"
+  "binary": {
+    "module_name": "grandiose",
+    "module_path": "./build/{configuration}/",
+    "remote_path": "{version}",
+    "package_name": "{platform}-{arch}.tar.gz",
+    "host": "https://github.com/AlexK-99/grandiose/releases/download/"
   }
 }

@@ -12,13 +12,10 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-
-const addon = require('bindings')('grandiose');
-
-try {
-  const SegfaultHandler = require('segfault-handler');
-  SegfaultHandler.registerHandler("crash.log"); // With no argument, SegfaultHandler will generate a generic log file name
-} catch(e) {}
+const binary = require('node-pre-gyp');
+const path = require('path');
+const binding_path = binary.find(path.resolve(path.join(__dirname, './package.json')));
+const addon = require(binding_path);
 
 const COLOR_FORMAT_BGRX_BGRA = 0; // No alpha channel: BGRX, Alpha channel: BGRA
 const COLOR_FORMAT_UYVY_BGRA = 1; // No alpha channel: UYVY, Alpha channel: BGRA
