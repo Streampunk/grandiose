@@ -20,9 +20,9 @@
   "author": "Streampunk Media <furnace@streampunk.media> (http://www.streampunk.media)",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/AlexK-99/grandiose"
+    "url": "https://github.com/Streampunk/grandiose/issues"
   },
-  "homepage": "https://github.com/AlexK-99/grandiose#readme",
+  "homepage": "https://github.com/Streampunk/grandiose#readme",
   "gypfile": true,
   "dependencies": {
     "node-pre-gyp": "0.15.0"
