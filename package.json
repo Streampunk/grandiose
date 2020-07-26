@@ -4,7 +4,8 @@
   "description": "Node.JS native bindings to the Newtek NDI SDK.",
   "main": "index.js",
   "scripts": {
-    "install": "node-pre-gyp install --fallback-to-build"
+    "install": "node-pre-gyp install --fallback-to-build",
+    "run-scratch-with-gc": "node --expose-gc scratch/receive-data.js"
   },
   "repository": {
     "type": "git",

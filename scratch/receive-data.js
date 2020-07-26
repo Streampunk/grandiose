@@ -1,6 +1,6 @@
 /* Copyright 2018 Streampunk Media Ltd.
 
-  Licensed under the Apache License, Version 2.0 (the "License");
+  Licensed under the Apache License, Version 2.0 (the "License")
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
 
@@ -13,27 +13,46 @@
   limitations under the License.
 */
 
-const g = require('../index.js');
+const grandiose = require('../index.js')
 
 async function run() {
-  let l = await g.find();
-  console.log('>>> FOUND >>>', l);
-  let r = await g.receive({ source: l[0] });
-  console.log('>>> RECEIVER >>>', r);
-  for ( let x = 0 ; x < 1000 ; x++ ) {
-    let d = await r.data({ audioFormat : g.AUDIO_FORMAT_INT_16_INTERLEAVED, referenceLevel: 0 });
-    console.log('>>> DATA >>>', d.type);
-    // console.log(a.data.length);
-    v = null;
+  try {
+    const availableSources = await grandiose.find()
+    console.log('>>> FOUND >>>', availableSources)
+
+    const receiver = await grandiose.receive({ source: availableSources[0] })
+    console.log('>>> RECEIVER >>>', receiver)
+
+    for (let x = 0; x < 1000; x++) {
+      const data = await receiver.data({ audioFormat: grandiose.AUDIO_FORMAT_INT_16_INTERLEAVED, referenceLevel: 0 })
+      console.log('>>> DATA >>>', data.type)
+      // console.log(a.data.length)
+    }
+    availableSources = null
+    receiver = null
+
+    console.log(process.memoryUsage())
+  } catch (e) {
+    console.error(e)
   }
-  l = null;
-  r = null;
-  d = null;
-  console.log(process.memoryUsage());
-  setTimeout(() => { global.gc();
-    console.log("that's almost all folks", process.memoryUsage()); }, 1000);
-  setTimeout(() => {   global.gc(); console.log("that's it", process.memoryUsage()); }, 2000);
-  setTimeout(() => {   global.gc(); console.log("that's really it", process.memoryUsage()); }, 3000);
+
+  if (!'gc' in global || typeof global.gc !== 'function') {
+    console.log('Garbage collection is not enabled')
+  } else {
+    // console.log('Garbage collecting real soon:')
+    setTimeout(() => {
+      global.gc()
+      console.log('GC 1st time. Mem usage after:', process.memoryUsage())
+    }, 1000)
+    setTimeout(() => {
+      global.gc()
+      console.log('GC 2nd time. Mem usage after:', process.memoryUsage())
+    }, 2000)
+    setTimeout(() => {
+      global.gc()
+      console.log('GC 3rd time. Mem usage after:', process.memoryUsage())
+    }, 3000)
+  }
 }
 
-run();
+run()

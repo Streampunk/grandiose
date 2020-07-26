@@ -8,7 +8,7 @@ const timeout = 5000; // Optional timeout, default is 10000ms
 
 grandiose.find({
 	// Should sources on the same system be found?
-	showLocalSources: true
+	// showLocalSources: true
 })
 	.then(async sources => {
 		if (!sources.length) {

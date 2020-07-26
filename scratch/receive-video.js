@@ -13,13 +13,13 @@
   limitations under the License.
 */
 
-const g = require('../index.js')
+const grandiose = require('../index.js')
 
 async function run() {
-  const availableSources = await g.find()
+  const availableSources = await grandiose.find()
   console.log('>>> FOUND >>>', availableSources)
 
-  const receiver = await g.receive({ source: availableSources[0] })
+  const receiver = await grandiose.receive({ source: availableSources[0] })
   console.log('>>> RECEIVER >>>', receiver)
 
   for (let x = 0; x < 10; x++) {
@@ -37,7 +37,7 @@ async function run() {
   availableSources = null
   receiver = null
 
-  console.log(process.memoryUsage())
+  console.log('Mem usage:', process.memoryUsage())
 
   setTimeout(() => {
     global.gc()
@@ -47,7 +47,6 @@ async function run() {
     global.gc()
     console.log('Mem usage after GC 2nd time:', process.memoryUsage())
   }, 2000)
-
   setTimeout(() => {
     global.gc()
     console.log('Mem usage after GC 3rd time:', process.memoryUsage())
