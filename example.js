@@ -14,9 +14,10 @@ grandiose.find({
 		if (!sources.length) {
 			return
 		}
-		console.log('Found sources', sources.length)
 
-		let source = sources[0]
+		console.log('Found NDI sources', sources.length)
+
+		const source = sources[0]
 
 		console.log('Source', source)
 
@@ -24,7 +25,7 @@ grandiose.find({
 
 		for (let x = 0; x < 10; x++) {
 			try {
-				let videoFrame = await receiver.video(timeout)
+				const videoFrame = await receiver.video(timeout)
 				console.log(videoFrame)
 			} catch (e) { console.error(e) }
 		}

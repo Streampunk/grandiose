@@ -29,7 +29,7 @@ struct findCarrier : carrier {
   uint32_t no_sources = 0;
   const NDIlib_source_t* sources;
   ~findCarrier() {
-    if (find != NULL) {
+    if (find != nullptr) {
       printf("Destroying find carrier.\n");
       NDIlib_find_destroy(find);
     }
