@@ -16,37 +16,41 @@
 const g = require('../index.js')
 
 async function run() {
-  let l = await g.find()
-  console.log('>>> FOUND >>>', l)
+  const availableSources = await g.find()
+  console.log('>>> FOUND >>>', availableSources)
 
-  let r = await g.receive({ source: l[0] })
-  console.log('>>> RECEIVER >>>', r)
+  const receiver = await g.receive({ source: availableSources[0] })
+  console.log('>>> RECEIVER >>>', receiver)
 
   for (let x = 0; x < 10; x++) {
-    let v = await r.video()
-    console.log('>>> VIDEO >>>', v)
-    console.log(process.memoryUsage())
-    v = null
+    const videoFrame = await receiver.video()
+
+    console.log('>>> VIDEO >>>')
+    console.log(videoFrame)
+    console.log('-----------------')
+
+    console.log('Mem usage:', process.memoryUsage())
+
+    videoFrame = null
   }
 
-  l = null
-  r = null
-  v = null
+  availableSources = null
+  receiver = null
 
   console.log(process.memoryUsage())
 
   setTimeout(() => {
     global.gc()
-    console.log("that's almost all folks", process.memoryUsage())
+    console.log('Mem usage after GC 1st time:', process.memoryUsage())
   }, 1000)
   setTimeout(() => {
     global.gc()
-    console.log("that's it", process.memoryUsage())
+    console.log('Mem usage after GC 2nd time:', process.memoryUsage())
   }, 2000)
 
   setTimeout(() => {
     global.gc()
-    console.log("that's really it", process.memoryUsage())
+    console.log('Mem usage after GC 3rd time:', process.memoryUsage())
   }, 3000)
 }
 
