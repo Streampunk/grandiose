@@ -9,8 +9,6 @@ NDI(tm) is a realisation of a grand vision for what IP media streams should and 
 
 # Installation
 
-Grandiose supports Windows x64, Mac OS x64 and Linux platforms at this time. Future platforms may be added in the future.
-
 Install [Node.js](http://nodejs.org/) for your platform. This software has been developed against the long term stable (LTS) release. Depending on OS, it can be necessary to perform installation of third party software before using Grandiose. Read the Prerequisites section below.
 
 ## Prerequisites
