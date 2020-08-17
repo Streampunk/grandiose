@@ -58,10 +58,14 @@ const AUDIO_FORMAT_INT_16_INTERLEAVED = 2
 const find = function (...args) {
   if (args.length === 0) return addon.find()
 
+  // If groups is passed as array, 
+  // then reduce to comma-concatenated string
   if (Array.isArray(args[0].groups)) {
     args[0].groups = args[0].groups.reduce((x, y) => x + ',' + y)
   }
 
+  // If extra IP addresses is passed as array, 
+  // then reduce to comma-concatenated string
   if (Array.isArray(args[0].extraIPs)) {
     args[0].extraIPs = args[0].extraIPs.reduce((x, y) => x + ',' + y)
   }
@@ -70,11 +74,14 @@ const find = function (...args) {
 }
 
 module.exports = {
+  // NDI library core functions
   find,
   send: addon.send,
+  receive: addon.receive,
   version: addon.version,
   isSupportedCPU: addon.isSupportedCPU,
-  receive: addon.receive,
+
+  // NDI Util constants
   COLOR_FORMAT_BGRX_BGRA,
   COLOR_FORMAT_UYVY_BGRA,
   COLOR_FORMAT_RGBX_RGBA,
