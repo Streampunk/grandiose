@@ -55,6 +55,7 @@ const AUDIO_FORMAT_FLOAT_32_INTERLEAVED = 1
 // Channels stored as channel-interleaved 16-bit integer values
 const AUDIO_FORMAT_INT_16_INTERLEAVED = 2
 
+// Find method for NDI library
 const find = function (...args) {
   if (args.length === 0) return addon.find()
 
