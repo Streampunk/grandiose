@@ -8,11 +8,10 @@ if (!grandiose.isSupportedCPU()) {
 	return
 }
 
-console.log('Is CPU supported?', grandiose.isSupportedCPU())
+// Optional timeout for receiving data from receiver, default is 10000ms
+const timeout = 5000
 
-const timeout = 5000 // Optional timeout, default is 10000ms
-
-
+// Initialize find process
 grandiose.find({
 	// Should sources on the same system be found?
 	showLocalSources: true
