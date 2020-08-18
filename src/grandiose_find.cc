@@ -30,11 +30,8 @@
 void findExecute(napi_env env, void* data) {
   findCarrier* c = (findCarrier*) data;
 
-  printf("Wait is %u.\n", c->wait);
-
   bool findStatus = NDIlib_find_wait_for_sources(c->find, c->wait);
   findStatus = NDIlib_find_wait_for_sources(c->find, c->wait);
-  printf("Find status is %i.\n", findStatus);
 
   c->sources = NDIlib_find_get_current_sources(c->find, &c->no_sources);
   if (!findStatus) {

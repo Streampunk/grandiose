@@ -14,7 +14,7 @@ const timeout = 5000
 // Initialize find process
 grandiose.find({
 	// Should sources on the same system be found?
-	showLocalSources: true
+	// showLocalSources: true
 })
 	.then(async sources => {
 		// Guard no sources found
