@@ -1,17 +1,25 @@
 
 const grandiose = require('./index')
+console.log('NDI version:', grandiose.version())
 
-console.log(grandiose.version())
-console.log('Is CPU supported?', grandiose.isSupportedCPU())
+// Guard unsupported CPU
+if (!grandiose.isSupportedCPU()) {
+	console.error('Unsupported CPU')
+	return
+}
 
-const timeout = 5000; // Optional timeout, default is 10000ms
+// Optional timeout for receiving data from receiver, default is 10000ms
+const timeout = 5000
 
+// Initialize find process
 grandiose.find({
 	// Should sources on the same system be found?
 	// showLocalSources: true
 })
 	.then(async sources => {
+		// Guard no sources found
 		if (!sources.length) {
+			console.log('No NDI sources found')
 			return
 		}
 
@@ -19,10 +27,11 @@ grandiose.find({
 
 		const source = sources[0]
 
-		console.log('Source', source)
+		console.log('NDI Source chosen', source)
 
-		let receiver = await grandiose.receive({ source: source })
+		const receiver = await grandiose.receive({ source: source })
 
+		// Read 10 frames
 		for (let x = 0; x < 10; x++) {
 			try {
 				const videoFrame = await receiver.video(timeout)
@@ -30,6 +39,14 @@ grandiose.find({
 			} catch (e) { console.error(e) }
 		}
 	})
-	.catch(console.error)
+	.catch(e => {
+		if (e.code && e.code.trim() === '4040') {
+			console.error('No NDI sources found...')
+			return
+		}
+
+		console.error('UNKNOWN ERROR...')
+		console.error(e)
+	})
 
 
