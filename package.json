@@ -1,15 +1,16 @@
 {
   "name": "grandiose",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Node.JS native bindings to the Newtek NDI SDK.",
   "main": "index.js",
   "scripts": {
     "install": "node-pre-gyp install --fallback-to-build",
+    "rebuild": "node-pre-gyp install --build-from-source",
     "run-scratch-with-gc": "node --expose-gc scratch/receive-data.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AlexK-99/grandiose.git"
+    "url": "git+https://github.com/jensstigaard/grandiose.git"
   },
   "keywords": [
     "Newtek",
@@ -33,6 +34,6 @@
     "module_path": "./build/{configuration}/",
     "remote_path": "{version}",
     "package_name": "{platform}-{arch}.tar.gz",
-    "host": "https://github.com/AlexK-99/grandiose/releases/download/"
+    "host": "https://github.com/jensstigaard/grandiose/releases/download/"
   }
 }
