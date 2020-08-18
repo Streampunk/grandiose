@@ -9,13 +9,14 @@ if (!grandiose.isSupportedCPU()) {
 }
 
 // Optional timeout for receiving data from receiver, default is 10000ms
-const timeout = 5000
+const discoveryTimeout = 10000
+const receiveTimeout = 5000
 
-// Initialize find process
+// Discover sources
 grandiose.find({
 	// Should sources on the same system be found?
-	// showLocalSources: true
-})
+	showLocalSources: true
+}, discoveryTimeout)
 	.then(async sources => {
 		// Guard no sources found
 		if (!sources.length) {
@@ -32,11 +33,16 @@ grandiose.find({
 		const receiver = await grandiose.receive({ source: source })
 
 		// Read 10 frames
-		for (let x = 0; x < 10; x++) {
+		for (let i = 0; i < 10; i++) {
 			try {
-				const videoFrame = await receiver.video(timeout)
+				console.log('Requesting video frame', i)
+				const videoFrame = await receiver.video(receiveTimeout)
+				console.log('Received video frame', i)
 				console.log(videoFrame)
-			} catch (e) { console.error(e) }
+			} catch (e) {
+				console.error('Error on requested video frame', i)
+				console.error(e)
+			}
 		}
 	})
 	.catch(e => {
