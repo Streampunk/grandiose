@@ -73,6 +73,7 @@ module.exports = {
   // NDI library core functions
   find,
   send: addon.send,
+  sendVideo: addon.sendVideo,
   receive: addon.receive,
   version: addon.version,
   isSupportedCPU: addon.isSupportedCPU,

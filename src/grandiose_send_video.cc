@@ -28,55 +28,59 @@
 #include "grandiose_send_video.h"
 #include "grandiose_util.h"
 
-napi_value sendVideo(napi_env env, napi_callback_info info) {
+// Send video
+napi_value sendVideo(napi_env env, napi_callback_info info)
+{
   napi_status status;
   napi_value result;
 
-  if (!NDIlib_initialize()) NAPI_THROW_ERROR("Failed to inittialise NDI subsystem.");
+  if (!NDIlib_initialize())
+    NAPI_THROW_ERROR("Failed to inittialise NDI subsystem.");
 
   // Create an NDI source that is called "My 16bpp Audio" and is clocked to the audio.
   NDIlib_send_create_t NDI_send_create_desc;
-  NDI_send_create_desc.p_ndi_name = "My 16bpp Audio";
+  NDI_send_create_desc.p_ndi_name = "My 8bpp video";
   NDI_send_create_desc.clock_audio = true;
 
   // We create the NDI finder
   NDIlib_send_instance_t pNDI_send = NDIlib_send_create(&NDI_send_create_desc);
-  if (!pNDI_send) NAPI_THROW_ERROR("Failed to create send instance.");
+  if (!pNDI_send)
+    NAPI_THROW_ERROR("Failed to create send instance.");
 
-  // We are going to send 1920 audio samples at a time
-  NDIlib_audio_frame_interleaved_16s_t NDI_audio_frame;
-  NDI_audio_frame.sample_rate = 48000;
-  NDI_audio_frame.no_channels = 2;
-  NDI_audio_frame.no_samples = 1920;
-  NDI_audio_frame.p_data = (short*)malloc(1920 * 2 * sizeof(short));
+	// We are going to create a 1920x1080 interlaced frame at 29.97Hz.
+	NDIlib_video_frame_v2_t NDI_video_frame;
+	NDI_video_frame.xres = 1920;
+	NDI_video_frame.yres = 1080;
+	NDI_video_frame.FourCC = NDIlib_FourCC_type_BGRX;
+	NDI_video_frame.p_data = (uint8_t*)malloc(NDI_video_frame.xres*NDI_video_frame.yres * 4);
 
-  for ( int x = 0 ; x < 1920 ; x++ ) {
-    short value = (short) (sin((x / 240.0) * 3.1415 * 2.0) * 28000);
-    // printf("Next value %i.\n", value);
-    NDI_audio_frame.p_data[x * 2] = value;
-    NDI_audio_frame.p_data[x * 2 + 1] = value;
-  }
-  // We will send 1000 frames of audio.
-  for ( int idx = 0 ; idx < 1000 ; idx++ )
-  {	// Fill in the buffer with silence. It is likely that you would do something much smarter than this.
-    //memset(NDI_audio_frame.p_data, 0, NDI_audio_frame.no_samples*NDI_audio_frame.no_channels*sizeof(short));
+	// Run for one minute
+	using namespace std::chrono;
+	for (const auto start = high_resolution_clock::now(); high_resolution_clock::now() - start < minutes(5);)
+	{	// Get the current time
+		const auto start_send = high_resolution_clock::now();
 
-    // We now submit the frame. Note that this call will be clocked so that we end up submitting
-    // at exactly 48kHz
-    NDIlib_util_send_send_audio_interleaved_16s(pNDI_send, &NDI_audio_frame);
+		// Send 200 frames
+		for (int idx = 200; idx; idx--)
+		{	// Fill in the buffer. It is likely that you would do something much smarter than this.
+			memset((void*)NDI_video_frame.p_data, (idx & 1) ? 255 : 0, NDI_video_frame.xres*NDI_video_frame.yres * 4);
 
-    // Just display something helpful
-    printf("Frame number %d sent.\n", idx);
-  }
+			// We now submit the frame. Note that this call will be clocked so that we end up submitting at exactly 29.97fps.
+			NDIlib_send_send_video_v2(pNDI_send, &NDI_video_frame);
+		}
 
-  // Free the video frame
-  free(NDI_audio_frame.p_data);
+		// Just display something helpful
+		printf("200 frames sent, at %1.2ffps\n", 200.0f / duration_cast<duration<float>>(high_resolution_clock::now() - start_send).count());
+	}
 
-  // Destroy the NDI finder
-  NDIlib_send_destroy(pNDI_send);
+	// Free the video frame
+	free(NDI_video_frame.p_data);
 
-  // Not required, but nice
-  NDIlib_destroy();
+	// Destroy the NDI sender
+	NDIlib_send_destroy(pNDI_send);
+
+	// Not required, but nice
+	NDIlib_destroy();
 
   status = napi_get_undefined(env, &result);
   CHECK_STATUS;

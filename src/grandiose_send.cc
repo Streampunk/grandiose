@@ -28,6 +28,7 @@
 #include "grandiose_send.h"
 #include "grandiose_util.h"
 
+// Send audio
 napi_value send(napi_env env, napi_callback_info info) {
   napi_status status;
   napi_value result;

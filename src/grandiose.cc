@@ -28,6 +28,7 @@
 #include "grandiose_util.h"
 #include "grandiose_find.h"
 #include "grandiose_send.h"
+#include "grandiose_send_video.h"
 #include "grandiose_receive.h"
 #include "node_api.h"
 
@@ -59,6 +60,7 @@ napi_value Init(napi_env env, napi_value exports) {
     DECLARE_NAPI_METHOD("find", find),
     DECLARE_NAPI_METHOD("isSupportedCPU", isSupportedCPU),
     DECLARE_NAPI_METHOD("send", send),
+    DECLARE_NAPI_METHOD("sendVideo", sendVideo),
     DECLARE_NAPI_METHOD("receive", receive)
    };
   status = napi_define_properties(env, exports, 5, desc);
