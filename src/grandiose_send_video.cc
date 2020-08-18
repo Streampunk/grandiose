@@ -13,6 +13,7 @@
   limitations under the License.
 */
 
+#include <stddef.h>
 #include <Processing.NDI.Lib.h>
 #include <cmath>
 
