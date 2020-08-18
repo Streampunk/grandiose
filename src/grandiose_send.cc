@@ -66,7 +66,7 @@ napi_value send(napi_env env, napi_callback_info info) {
     NDIlib_util_send_send_audio_interleaved_16s(pNDI_send, &NDI_audio_frame);
 
     // Just display something helpful
-    printf("Frame number %d sent.\n", idx);
+    // printf("Frame number %d sent.\n", idx);
   }
 
   // Free the video frame

@@ -27,29 +27,33 @@
 #include "grandiose_util.h"
 #include "grandiose_find.h"
 
-void findExecute(napi_env env, void* data) {
-  findCarrier* c = (findCarrier*) data;
+void findExecute(napi_env env, void *data)
+{
+  findCarrier *c = (findCarrier *)data;
 
-  printf("Wait is %u.\n", c->wait);
+  // printf("Wait is %u.\n", c->wait);
 
   bool findStatus = NDIlib_find_wait_for_sources(c->find, c->wait);
   findStatus = NDIlib_find_wait_for_sources(c->find, c->wait);
-  printf("Find status is %i.\n", findStatus);
+
+  // printf("Find status is %i.\n", findStatus);
 
   c->sources = NDIlib_find_get_current_sources(c->find, &c->no_sources);
-  if (!findStatus) {
+  if (!findStatus)
+  {
     c->status = GRANDIOSE_NOT_FOUND;
     c->errorMsg =
-      "Did not find any NDI streams in the given wait time of " +
-      std::to_string(c->wait) + "ms.";
+        "Did not find any NDI streams in the given wait time of " +
+        std::to_string(c->wait) + "ms.";
   }
-
 }
 
-void findComplete(napi_env env, napi_status asyncStatus, void* data) {
-  findCarrier* c = (findCarrier*) data;
+void findComplete(napi_env env, napi_status asyncStatus, void *data)
+{
+  findCarrier *c = (findCarrier *)data;
 
-  if (asyncStatus != napi_ok) {
+  if (asyncStatus != napi_ok)
+  {
     c->status = asyncStatus;
     c->errorMsg = "Async finder failed to complete.";
   }
@@ -59,7 +63,8 @@ void findComplete(napi_env env, napi_status asyncStatus, void* data) {
   c->status = napi_create_array(env, &result);
   REJECT_STATUS;
   napi_value item;
-  for ( uint32_t i = 0 ; i < c->no_sources; i++ ) {
+  for (uint32_t i = 0; i < c->no_sources; i++)
+  {
     napi_value name, uri;
     c->status = napi_create_string_utf8(env, c->sources[i].p_ndi_name, NAPI_AUTO_LENGTH, &name);
     REJECT_STATUS;
@@ -83,12 +88,13 @@ void findComplete(napi_env env, napi_status asyncStatus, void* data) {
   tidyCarrier(env, c);
 }
 
-napi_value find(napi_env env, napi_callback_info info) {
+napi_value find(napi_env env, napi_callback_info info)
+{
   napi_valuetype type;
-  findCarrier* c = new findCarrier;
+  findCarrier *c = new findCarrier;
 
   napi_value promise;
-  c-> status = napi_create_promise(env, &c->_deferred, &promise);
+  c->status = napi_create_promise(env, &c->_deferred, &promise);
   REJECT_RETURN;
 
   NDIlib_find_create_t find_create;
@@ -101,82 +107,92 @@ napi_value find(napi_env env, napi_callback_info info) {
 
   c->status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
   REJECT_RETURN;
-  if (argc >= 1) {
+  if (argc >= 1)
+  {
     c->status = napi_typeof(env, args[0], &type);
     REJECT_RETURN;
-    if (type == napi_object) {
+    if (type == napi_object)
+    {
       napi_value property;
       c->status = napi_get_named_property(env, args[0], "showLocalSources", &property);
-      if (c->status == napi_ok) {
+      if (c->status == napi_ok)
+      {
         c->status = napi_typeof(env, property, &type);
         REJECT_RETURN;
-        if (type == napi_boolean) {
+        if (type == napi_boolean)
+        {
           c->status = napi_get_value_bool(env, property, &find_create.show_local_sources);
           REJECT_RETURN;
         }
       } // status == napi_ok for showLocalSources
       c->status = napi_get_named_property(env, args[0], "groups", &property);
-      if (c->status == napi_ok) {
+      if (c->status == napi_ok)
+      {
         c->status = napi_typeof(env, property, &type);
         REJECT_RETURN;
-        switch (type) {
-          case napi_string:
-            size_t len;
-            c->status = napi_get_value_string_utf8(env, property, NULL, 0, &len);
-            REJECT_RETURN;
-            find_create.p_groups = (const char *) malloc(len + 1);
-            c->status = napi_get_value_string_utf8(
-              env, 
+        switch (type)
+        {
+        case napi_string:
+          size_t len;
+          c->status = napi_get_value_string_utf8(env, property, NULL, 0, &len);
+          REJECT_RETURN;
+          find_create.p_groups = (const char *)malloc(len + 1);
+          c->status = napi_get_value_string_utf8(
+              env,
               property,
-              (char *) find_create.p_groups, 
-              len + 1, 
-              &len
-            );
-            REJECT_RETURN;
-            break;
-          default:
-            break;
+              (char *)find_create.p_groups,
+              len + 1,
+              &len);
+          REJECT_RETURN;
+          break;
+        default:
+          break;
         }
       } // status == napi_ok for p_groups
       c->status = napi_get_named_property(env, args[0], "extraIPs", &property);
-      if (c->status == napi_ok) {
+      if (c->status == napi_ok)
+      {
         c->status = napi_typeof(env, property, &type);
         REJECT_RETURN;
-        switch (type) {
-          case napi_string:
-            size_t len;
-            c->status =  napi_get_value_string_utf8(env, property, NULL, 0, &len);
-            REJECT_RETURN;
-            find_create.p_extra_ips = (const char *) malloc(len + 1);
-            c->status = napi_get_value_string_utf8(env, property,
-              (char *) find_create.p_extra_ips, len + 1, &len);
-            REJECT_RETURN;
-            break;
-          default:
-            break;
+        switch (type)
+        {
+        case napi_string:
+          size_t len;
+          c->status = napi_get_value_string_utf8(env, property, NULL, 0, &len);
+          REJECT_RETURN;
+          find_create.p_extra_ips = (const char *)malloc(len + 1);
+          c->status = napi_get_value_string_utf8(env, property,
+                                                 (char *)find_create.p_extra_ips, len + 1, &len);
+          REJECT_RETURN;
+          break;
+        default:
+          break;
         }
       }
 
     } // type == napi_object
-  } // argc >= 1
+  }   // argc >= 1
 
-  if (argc >= 2) {
+  if (argc >= 2)
+  {
     c->status = napi_typeof(env, args[1], &type);
     REJECT_RETURN;
-    if (type == napi_number) {
+    if (type == napi_number)
+    {
       c->status = napi_get_value_uint32(env, args[1], &c->wait);
       REJECT_RETURN;
     }
   }
 
   c->find = NDIlib_find_create_v2(&find_create);
-  if (!c->find) REJECT_ERROR_RETURN("Failed to create NDI find instance.", GRANDIOSE_INVALID_ARGS);
+  if (!c->find)
+    REJECT_ERROR_RETURN("Failed to create NDI find instance.", GRANDIOSE_INVALID_ARGS);
 
   napi_value resource_name;
   c->status = napi_create_string_utf8(env, "Find", NAPI_AUTO_LENGTH, &resource_name);
   REJECT_RETURN;
   c->status = napi_create_async_work(env, NULL, resource_name, findExecute,
-    findComplete, c, &c->_request);
+                                     findComplete, c, &c->_request);
   REJECT_RETURN;
   c->status = napi_queue_async_work(env, c->_request);
   REJECT_RETURN;
@@ -185,9 +201,10 @@ napi_value find(napi_env env, napi_callback_info info) {
 }
 
 // Make a native source object from components of a source object
-napi_status makeNativeSource(napi_env env, napi_value source, NDIlib_source_t *result) {
-  const char* name = NULL;
-  const char* url = NULL;
+napi_status makeNativeSource(napi_env env, napi_value source, NDIlib_source_t *result)
+{
+  const char *name = NULL;
+  const char *url = NULL;
   napi_status status;
   napi_valuetype type;
   napi_value namev, urlv;
@@ -200,21 +217,23 @@ napi_status makeNativeSource(napi_env env, napi_value source, NDIlib_source_t *r
 
   status = napi_typeof(env, namev, &type);
   PASS_STATUS;
-  if (type == napi_string) {
+  if (type == napi_string)
+  {
     status = napi_get_value_string_utf8(env, namev, NULL, 0, &namel);
     PASS_STATUS;
-    name = (char *) malloc(namel + 1);
-    status = napi_get_value_string_utf8(env, namev, (char*) name, namel + 1, &namel);
+    name = (char *)malloc(namel + 1);
+    status = napi_get_value_string_utf8(env, namev, (char *)name, namel + 1, &namel);
     PASS_STATUS;
   }
 
   status = napi_typeof(env, urlv, &type);
   PASS_STATUS;
-  if (type == napi_string) {
+  if (type == napi_string)
+  {
     status = napi_get_value_string_utf8(env, urlv, NULL, 0, &urll);
     PASS_STATUS;
-    url = (char *) malloc(urll + 1);
-    status = napi_get_value_string_utf8(env, urlv, (char*) url, urll + 1, &urll);
+    url = (char *)malloc(urll + 1);
+    status = napi_get_value_string_utf8(env, urlv, (char *)url, urll + 1, &urll);
     PASS_STATUS;
   }
 
