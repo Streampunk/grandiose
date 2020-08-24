@@ -25,12 +25,13 @@
 #endif // _WIN64
 #endif // _WIN32
 
+#include "node_api.h"
+/* Includes of grandiose methods */
 #include "grandiose_util.h"
 #include "grandiose_find.h"
 #include "grandiose_send.h"
 #include "grandiose_send_video.h"
 #include "grandiose_receive.h"
-#include "node_api.h"
 
 napi_value version(napi_env env, napi_callback_info info) {
   napi_status status;

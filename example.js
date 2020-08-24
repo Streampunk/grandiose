@@ -26,6 +26,8 @@ grandiose.find({
 
 		console.log('Found NDI sources', sources.length)
 
+		console.log(sources)
+
 		const source = sources[0]
 
 		console.log('NDI Source chosen', source)
@@ -33,12 +35,32 @@ grandiose.find({
 		const receiver = await grandiose.receive({ source: source })
 
 		// Read 10 frames
-		for (let i = 0; i < 10; i++) {
+		const frameCount = {}
+		for (let i = 0; i < 50; i++) {
 			try {
-				console.log('Requesting video frame', i)
-				const videoFrame = await receiver.video(receiveTimeout)
-				console.log('Received video frame', i)
-				console.log(videoFrame)
+				console.log('Requesting frame', i)
+				const frame = await receiver.data(receiveTimeout) // Any type of frame
+				if (!typeof frame === 'object' || !frame.type) {
+					continue
+				}
+				// Switch based on type of frame
+				switch (frame.type) {
+					case 'statusChange':
+						console.log('Status change:', frame)
+						break
+					case 'audio':
+						console.log('Audio frame received', i)
+						// console.log('Audio frame data:', frame)
+						break
+					case 'video':
+						console.log('Video frame received', i)
+						console.log('Video frame framerate:', frame.frameRateN / frame.frameRateD)
+						break
+					default:
+						// Do not do anything with this type of data frame
+						console.log('Unhandled type:', frame.type)
+						break
+				}
 			} catch (e) {
 				console.error('Error on requested video frame', i)
 				console.error(e)

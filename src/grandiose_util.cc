@@ -20,8 +20,8 @@
 #include <chrono>
 #include <string>
 #include <Processing.NDI.Lib.h>
-#include "grandiose_util.h"
 #include "node_api.h"
+#include "grandiose_util.h"
 
 /*
  * Got this from https://codereview.stackexchange.com/q/164322

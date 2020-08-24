@@ -39,6 +39,8 @@ napi_value sendVideo(napi_env env, napi_callback_info info)
 
   // Create an NDI source that is called "My 16bpp Audio" and is clocked to the audio.
   NDIlib_send_create_t NDI_send_create_desc;
+
+  // Set name of NDI source
   NDI_send_create_desc.p_ndi_name = "My 8bpp video";
   NDI_send_create_desc.clock_audio = true;
 
@@ -47,40 +49,49 @@ napi_value sendVideo(napi_env env, napi_callback_info info)
   if (!pNDI_send)
     NAPI_THROW_ERROR("Failed to create send instance.");
 
-	// We are going to create a 1920x1080 interlaced frame at 29.97Hz.
-	NDIlib_video_frame_v2_t NDI_video_frame;
-	NDI_video_frame.xres = 1920;
-	NDI_video_frame.yres = 1080;
-	NDI_video_frame.FourCC = NDIlib_FourCC_type_BGRX;
-	NDI_video_frame.p_data = (uint8_t*)malloc(NDI_video_frame.xres*NDI_video_frame.yres * 4);
+  // We are going to create a 1920x1080 interlaced frame at 29.97Hz.
+  NDIlib_video_frame_v2_t NDI_video_frame;
 
-	// Run for one minute
-	using namespace std::chrono;
-	for (const auto start = high_resolution_clock::now(); high_resolution_clock::now() - start < minutes(5);)
-	{	// Get the current time
-		const auto start_send = high_resolution_clock::now();
+  NDI_video_frame.xres = 1920;
+  NDI_video_frame.yres = 1080;
+  NDI_video_frame.FourCC = NDIlib_FourCC_type_BGRX;
 
-		// Send 200 frames
-		for (int idx = 200; idx; idx--)
-		{	// Fill in the buffer. It is likely that you would do something much smarter than this.
-			memset((void*)NDI_video_frame.p_data, (idx & 1) ? 255 : 0, NDI_video_frame.xres*NDI_video_frame.yres * 4);
+  // Calculate number of pixels in video frame
+  const auto number_of_pixels = NDI_video_frame.xres * NDI_video_frame.yres;
 
-			// We now submit the frame. Note that this call will be clocked so that we end up submitting at exactly 29.97fps.
-			NDIlib_send_send_video_v2(pNDI_send, &NDI_video_frame);
-		}
+  // Allocate buffer for the video frame
+  // 8 bit per channel (BGRX) per pixel
+  NDI_video_frame.p_data = (uint8_t *)malloc(number_of_pixels * 4);
 
-		// Just display something helpful
-		printf("200 frames sent, at %1.2ffps\n", 200.0f / duration_cast<duration<float>>(high_resolution_clock::now() - start_send).count());
-	}
+  // Run for 5 minutes
+  using namespace std::chrono;
+  for (const auto start = high_resolution_clock::now(); high_resolution_clock::now() - start < minutes(5);)
+  { // Get the current time
+    const auto start_send = high_resolution_clock::now();
 
-	// Free the video frame
-	free(NDI_video_frame.p_data);
+    // Send 200 frames
+    for (int idx = 200; idx; idx--)
+    {
+      // Fill in the buffer. It is likely that you would do something much smarter than this.
+      // All pixels is painted the same color - the color is switching between black and white based on the frame number
+      memset((void *)NDI_video_frame.p_data, (idx & 1) ? 255 : 0, number_of_pixels * 4);
 
-	// Destroy the NDI sender
-	NDIlib_send_destroy(pNDI_send);
+      // We now submit the frame. Note that this call will be clocked so that we end up submitting at exactly 29.97fps.
+      NDIlib_send_send_video_v2(pNDI_send, &NDI_video_frame);
+    }
 
-	// Not required, but nice
-	NDIlib_destroy();
+    // Just display something helpful
+    printf("200 frames sent, at %1.2ffps\n", 200.0f / duration_cast<duration<float>>(high_resolution_clock::now() - start_send).count());
+  }
+
+  // Free the video frame
+  free(NDI_video_frame.p_data);
+
+  // Destroy the NDI sender
+  NDIlib_send_destroy(pNDI_send);
+
+  // Not required, but nice
+  NDIlib_destroy();
 
   status = napi_get_undefined(env, &result);
   CHECK_STATUS;
