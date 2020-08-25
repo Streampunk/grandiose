@@ -23,13 +23,23 @@
 napi_value find(napi_env env, napi_callback_info info);
 napi_status makeNativeSource(napi_env env, napi_value source, NDIlib_source_t *result);
 
-struct findCarrier : carrier {
-  uint32_t wait = 10000;
+struct findCarrier : carrier
+{
+  // NDI Find instance
   NDIlib_find_instance_t find = NULL;
+
+  // NDI Find config
+  uint32_t wait = 10000;
+
+  // Found sources
+  const NDIlib_source_t *sources;
   uint32_t no_sources = 0;
-  const NDIlib_source_t* sources;
-  ~findCarrier() {
-    if (find != NULL) {
+
+  // On destroy
+  ~findCarrier()
+  {
+    if (find != NULL)
+    {
       // printf("Destroying find carrier.\n");
       NDIlib_find_destroy(find);
     }

@@ -13,17 +13,25 @@
   limitations under the License.
 */
 
+// Native libraries
 #include <assert.h>
+#include <chrono>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
-#include <chrono>
 #include <string>
-#include <Processing.NDI.Lib.h>
+
+// NAPI
 #include "node_api.h"
+
+// NDIlib
+#include <Processing.NDI.Lib.h>
+
+// Grandiose util
 #include "grandiose_util.h"
 
 /*
+ * Convert integer to string (non-standard function)
  * Got this from https://codereview.stackexchange.com/q/164322
  * Because it's a non-standard function
  */
@@ -42,7 +50,6 @@ char *itoa(int number, char string_out[], int width)
 napi_status checkStatus(napi_env env, napi_status status,
                         const char *file, uint32_t line)
 {
-
   napi_status infoStatus, throwStatus;
   const napi_extended_error_info *errorInfo;
 

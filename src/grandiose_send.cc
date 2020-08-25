@@ -14,8 +14,8 @@
 */
 
 #include <stddef.h>
-#include <Processing.NDI.Lib.h>
 #include <cmath>
+#include <Processing.NDI.Lib.h>
 
 #ifdef _WIN32
 #ifdef _WIN64

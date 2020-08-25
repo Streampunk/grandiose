@@ -13,10 +13,10 @@
   limitations under the License.
 */
 
-#include <stddef.h>
 #include <chrono>
-#include <Processing.NDI.Lib.h>
+#include <stddef.h>
 #include <inttypes.h>
+#include <Processing.NDI.Lib.h>
 
 #ifdef _WIN32
 #ifdef _WIN64

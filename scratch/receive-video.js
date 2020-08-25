@@ -32,10 +32,12 @@ async function run() {
       console.log(videoFrame)
       console.log('-----------------')
 
-      console.log('Mem usage:', process.memoryUsage())
     } catch (e) {
       console.error('Error receiving frame', i, ':', e)
     }
+
+    console.log('Mem usage:', process.memoryUsage())
+    console.log('-----------------')
   }
 
   availableSources = null

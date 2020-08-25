@@ -13,8 +13,8 @@
   limitations under the License.
 */
 
-#include <cstdio>
 #include <chrono>
+#include <cstdio>
 #include <Processing.NDI.Lib.h>
 
 #ifdef _WIN32
@@ -60,6 +60,7 @@ napi_value Init(napi_env env, napi_value exports)
 {
   napi_status status;
   napi_property_descriptor desc[] = {
+      // Methods in alphabetically order
       DECLARE_NAPI_METHOD("find", find),
       DECLARE_NAPI_METHOD("isSupportedCPU", isSupportedCPU),
       DECLARE_NAPI_METHOD("receive", receive),
@@ -67,10 +68,10 @@ napi_value Init(napi_env env, napi_value exports)
       DECLARE_NAPI_METHOD("sendVideo", sendVideo),
       DECLARE_NAPI_METHOD("version", version)};
 
-  // Get number of properties
+  // Get number of properties in array
   int arrSize = *(&desc + 1) - desc;
 
-  // Export properties
+  // Export properties (methods)
   status = napi_define_properties(env, exports, arrSize, desc);
   CHECK_STATUS;
 

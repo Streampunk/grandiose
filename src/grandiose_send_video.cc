@@ -13,9 +13,9 @@
   limitations under the License.
 */
 
+#include <cmath>
 #include <stddef.h>
 #include <Processing.NDI.Lib.h>
-#include <cmath>
 
 #ifdef _WIN32
 #ifdef _WIN64
