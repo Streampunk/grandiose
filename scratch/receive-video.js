@@ -23,16 +23,19 @@ async function run() {
   const receiver = await grandiose.receive({ source: availableSources[0] })
   console.log('>>> RECEIVER >>>', receiver)
 
-  for (let x = 0; x < 10; x++) {
-    const videoFrame = await receiver.video()
+  for (let i = 0; i < 10; i++) {
+    try {
+      console.log('>>> VIDEO >>>', i)
 
-    console.log('>>> VIDEO >>>')
-    console.log(videoFrame)
-    console.log('-----------------')
+      const videoFrame = await receiver.video()
 
-    console.log('Mem usage:', process.memoryUsage())
+      console.log(videoFrame)
+      console.log('-----------------')
 
-    videoFrame = null
+      console.log('Mem usage:', process.memoryUsage())
+    } catch (e) {
+
+    }
   }
 
   availableSources = null
