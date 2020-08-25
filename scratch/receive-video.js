@@ -34,7 +34,7 @@ async function run() {
 
       console.log('Mem usage:', process.memoryUsage())
     } catch (e) {
-
+      console.error('Error receiving frame', i, ':', e)
     }
   }
 
