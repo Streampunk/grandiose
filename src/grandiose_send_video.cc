@@ -66,7 +66,8 @@ napi_value sendVideo(napi_env env, napi_callback_info info)
   // Run for 5 minutes
   using namespace std::chrono;
   for (const auto start = high_resolution_clock::now(); high_resolution_clock::now() - start < minutes(5);)
-  { // Get the current time
+  {
+    // Get the current time
     const auto start_send = high_resolution_clock::now();
 
     // Send 200 frames
@@ -83,6 +84,7 @@ napi_value sendVideo(napi_env env, napi_callback_info info)
     // Just display something helpful
     printf("200 frames sent, at %1.2ffps\n", 200.0f / duration_cast<duration<float>>(high_resolution_clock::now() - start_send).count());
   }
+  // Finish looping
 
   // Free the video frame
   free(NDI_video_frame.p_data);

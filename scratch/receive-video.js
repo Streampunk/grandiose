@@ -13,12 +13,13 @@
   limitations under the License.
 */
 
-const grandiose = require('../index.js')
+const grandiose = require('../index')
 
 async function run() {
   const availableSources = await grandiose.find()
   console.log('>>> FOUND >>>', availableSources)
 
+  console.log(grandiose)
   const receiver = await grandiose.receive({ source: availableSources[0] })
   console.log('>>> RECEIVER >>>', receiver)
 
