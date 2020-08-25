@@ -155,19 +155,26 @@ napi_status checkArgs(napi_env env, napi_callback_info info, char *methodName,
   return napi_ok;
 };
 
+// TidyCarrier - Carrier Cleaning
 void tidyCarrier(napi_env env, carrier *c)
 {
   napi_status status;
+
+  // If has passthru set then delete passthru reference
   if (c->passthru != NULL)
   {
     status = napi_delete_reference(env, c->passthru);
     FLOATING_STATUS;
   }
+
+  // If has request set then delete complete async work
   if (c->_request != NULL)
   {
     status = napi_delete_async_work(env, c->_request);
     FLOATING_STATUS;
   }
+
+  // Finally delete carrier
   delete c;
 }
 

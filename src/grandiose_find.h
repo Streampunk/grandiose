@@ -25,14 +25,14 @@ napi_status makeNativeSource(napi_env env, napi_value source, NDIlib_source_t *r
 
 struct findCarrier : carrier
 {
-  // NDI Find instance
+  // NDI Find type and sources
   NDIlib_find_instance_t find = NULL;
+  const NDIlib_source_t *sources;
 
   // NDI Find config
   uint32_t wait = 10000;
 
-  // Found sources
-  const NDIlib_source_t *sources;
+  // Number of found sources
   uint32_t no_sources = 0;
 
   // On destroy

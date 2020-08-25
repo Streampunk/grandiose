@@ -80,12 +80,17 @@ napi_status checkArgs(napi_env env, napi_callback_info info, char *methodName,
 struct carrier
 {
   virtual ~carrier() {}
-  napi_ref passthru = NULL;
+
   int32_t status = GRANDIOSE_SUCCESS;
   std::string errorMsg;
   long long totalTime;
+
+  // Promise deferred
   napi_deferred _deferred;
+  // Async request
   napi_async_work _request = NULL;
+  // Reference
+  napi_ref passthru = NULL;
 };
 
 void tidyCarrier(napi_env env, carrier *c);
