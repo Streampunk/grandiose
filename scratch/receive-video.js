@@ -40,23 +40,23 @@ async function run() {
     console.log('-----------------')
   }
 
-  availableSources = null
-  receiver = null
-
   console.log('Mem usage:', process.memoryUsage())
 
-  setTimeout(() => {
-    global.gc()
-    console.log('Mem usage after GC 1st time:', process.memoryUsage())
-  }, 1000)
-  setTimeout(() => {
-    global.gc()
-    console.log('Mem usage after GC 2nd time:', process.memoryUsage())
-  }, 2000)
-  setTimeout(() => {
-    global.gc()
-    console.log('Mem usage after GC 3rd time:', process.memoryUsage())
-  }, 3000)
+  // Run garbage collection if exposed
+  if (global && global.gc && typeof global.gc === 'Function') {
+    setTimeout(() => {
+      global.gc()
+      console.log('Mem usage after GC 1st time:', process.memoryUsage())
+    }, 1000)
+    setTimeout(() => {
+      global.gc()
+      console.log('Mem usage after GC 2nd time:', process.memoryUsage())
+    }, 2000)
+    setTimeout(() => {
+      global.gc()
+      console.log('Mem usage after GC 3rd time:', process.memoryUsage())
+    }, 3000)
+  }
 }
 
 run()
