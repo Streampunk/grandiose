@@ -69,8 +69,6 @@ const find = function (...args) {
   return addon.find.apply(null, args)
 }
 
-console.log('Receive:', addon.receive)
-
 module.exports = {
   // NDI library core functions
   // NDI Find
@@ -83,6 +81,7 @@ module.exports = {
   send: addon.send, // Send audio
   sendVideo: addon.sendVideo,
 
+  // Helper methods
   version: addon.version,
   isSupportedCPU: addon.isSupportedCPU,
 
