@@ -65,3 +65,5 @@ build
 
 ._*
 .DS_Store
+
+dist
