@@ -30,24 +30,32 @@
 #include "grandiose_util.h"
 #include "grandiose_find.h"
 
+// Upon finalize callback (when ready for garbage collecting)
+// then destroy receiver instance
 void finalizeReceive(napi_env env, void *data, void *hint)
 {
   // printf("Releasing receiver.\n");
   NDIlib_recv_destroy((NDIlib_recv_instance_t)data);
 }
 
+// Receive callback
 void receiveExecute(napi_env env, void *data)
 {
+  // Prepare receive carrier based on properties from data
   receiveCarrier *c = (receiveCarrier *)data;
 
+  // Prepare NDIlib receive type
   NDIlib_recv_create_v3_t receiveConfig;
+  // Set properties from carrier data
   receiveConfig.source_to_connect_to = *c->source;
   receiveConfig.color_format = c->colorFormat;
   receiveConfig.bandwidth = c->bandwidth;
   receiveConfig.allow_video_fields = c->allowVideoFields;
   receiveConfig.p_ndi_recv_name = c->name;
 
+  // Associate receiver instance on carrier
   c->recv = NDIlib_recv_create_v3(&receiveConfig);
+  // Guard if creating NDI receiver failed
   if (!c->recv)
   {
     c->status = GRANDIOSE_RECEIVE_CREATE_FAIL;
@@ -55,15 +63,19 @@ void receiveExecute(napi_env env, void *data)
     return;
   }
 
+  // Connect the receiver
   NDIlib_recv_connect(c->recv, c->source);
 }
 
+// Upon receive callback completed
 void receiveComplete(napi_env env, napi_status asyncStatus, void *data)
 {
+  // Prepare receive carrier with properties based on data
   receiveCarrier *c = (receiveCarrier *)data;
 
   // printf("Completing some receive creation work.\n");
 
+  // Guard perform async creation was not ok
   if (asyncStatus != napi_ok)
   {
     c->status = asyncStatus;
@@ -71,44 +83,56 @@ void receiveComplete(napi_env env, napi_status asyncStatus, void *data)
   }
   REJECT_STATUS;
 
+  // Read result object value from environment
   napi_value result;
   c->status = napi_create_object(env, &result);
   REJECT_STATUS;
 
+  // Extract properties
+  // Embedded
   napi_value embedded;
   c->status = napi_create_external(env, c->recv, finalizeReceive, nullptr, &embedded);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "embedded", embedded);
   REJECT_STATUS;
 
+  // Video frame
   napi_value videoFn;
-  c->status = napi_create_function(env, "video", NAPI_AUTO_LENGTH, videoReceive,
-                                   nullptr, &videoFn);
+  c->status = napi_create_function(env,
+                                   "video", NAPI_AUTO_LENGTH,
+                                   videoReceive, nullptr, &videoFn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "video", videoFn);
   REJECT_STATUS;
 
+  // Audio frame
   napi_value audioFn;
-  c->status = napi_create_function(env, "audio", NAPI_AUTO_LENGTH, audioReceive,
-                                   nullptr, &audioFn);
+  c->status = napi_create_function(env,
+                                   "audio", NAPI_AUTO_LENGTH,
+                                   audioReceive, nullptr, &audioFn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "audio", audioFn);
   REJECT_STATUS;
 
+  // Metadata frame
   napi_value metadataFn;
-  c->status = napi_create_function(env, "metadata", NAPI_AUTO_LENGTH, metadataReceive,
-                                   nullptr, &metadataFn);
+  c->status = napi_create_function(env,
+                                   "metadata", NAPI_AUTO_LENGTH,
+                                   metadataReceive, nullptr, &metadataFn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "metadata", metadataFn);
   REJECT_STATUS;
 
+  // Data (genric) frame
   napi_value dataFn;
-  c->status = napi_create_function(env, "data", NAPI_AUTO_LENGTH, dataReceive,
-                                   nullptr, &dataFn);
+  c->status = napi_create_function(env,
+                                   "data", NAPI_AUTO_LENGTH,
+                                   dataReceive, nullptr, &dataFn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "data", dataFn);
   REJECT_STATUS;
 
+  // Parse source, name and uri properties
   napi_value source, name, uri;
   c->status = napi_create_string_utf8(env, c->source->p_ndi_name, NAPI_AUTO_LENGTH, &name);
   REJECT_STATUS;
@@ -123,24 +147,29 @@ void receiveComplete(napi_env env, napi_status asyncStatus, void *data)
   c->status = napi_set_named_property(env, result, "source", source);
   REJECT_STATUS;
 
+  // Set properties based on passed
+  // Color format
   napi_value colorFormat;
   c->status = napi_create_int32(env, (int32_t)c->colorFormat, &colorFormat);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "colorFormat", colorFormat);
   REJECT_STATUS;
 
+  // Desired bandwidth type
   napi_value bandwidth;
   c->status = napi_create_int32(env, (int32_t)c->bandwidth, &bandwidth);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "bandwidth", bandwidth);
   REJECT_STATUS;
 
+  // Allow video fields
   napi_value allowVideoFields;
   c->status = napi_get_boolean(env, c->allowVideoFields, &allowVideoFields);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "allowVideoFields", allowVideoFields);
   REJECT_STATUS;
 
+  // In case a name is passed by user then populate this property
   if (c->name != nullptr)
   {
     c->status = napi_create_string_utf8(env, c->name, NAPI_AUTO_LENGTH, &name);
@@ -149,22 +178,24 @@ void receiveComplete(napi_env env, napi_status asyncStatus, void *data)
     REJECT_STATUS;
   }
 
+  // Resolve deferred callback
   napi_status status;
   status = napi_resolve_deferred(env, c->_deferred, result);
   FLOATING_STATUS;
 
+  // Cleanup carrier (destroys references)
   tidyCarrier(env, c);
 }
 
 napi_value receive(napi_env env, napi_callback_info info)
 {
-  napi_valuetype type;
   receiveCarrier *c = new receiveCarrier;
 
   napi_value promise;
   c->status = napi_create_promise(env, &c->_deferred, &promise);
   REJECT_RETURN;
 
+  // Read arguments passed to promise
   size_t argc = 1;
   napi_value args[1];
   c->status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
@@ -175,36 +206,51 @@ napi_value receive(napi_env env, napi_callback_info info)
         "Receiver must be created with an object containing at least a 'source' property.",
         GRANDIOSE_INVALID_ARGS);
 
+  napi_valuetype type;
+  // Type of first argument
   c->status = napi_typeof(env, args[0], &type);
   REJECT_RETURN;
   bool isArray;
+  // Check type of first argument is array
   c->status = napi_is_array(env, args[0], &isArray);
   REJECT_RETURN;
+
+  // Guard if first argument is neither object or array
   if ((type != napi_object) || isArray)
     REJECT_ERROR_RETURN(
         "Single argument must be an object, not an array, containing at least a 'source' property.",
         GRANDIOSE_INVALID_ARGS);
 
+  // Config is first argument
   napi_value config = args[0];
+
+  // Prepare properties
   napi_value source, colorFormat, bandwidth, allowVideoFields, name;
-  // source is an object, not an array, with name and urlAddress
+  // source is an object (not an array) with name and urlAddress
   // convert to a native source
+
+  // Extract properties
   c->status = napi_get_named_property(env, config, "source", &source);
   REJECT_RETURN;
+  // Type of source
   c->status = napi_typeof(env, source, &type);
   REJECT_RETURN;
+  // Is source array
   c->status = napi_is_array(env, source, &isArray);
   REJECT_RETURN;
+  // Guard source is not object or array
   if ((type != napi_object) || isArray)
     REJECT_ERROR_RETURN(
         "Source property must be an object and not an array.",
         GRANDIOSE_INVALID_ARGS);
 
+  // Type of name
   napi_value checkType;
   c->status = napi_get_named_property(env, source, "name", &checkType);
   REJECT_RETURN;
   c->status = napi_typeof(env, checkType, &type);
   REJECT_RETURN;
+  // Guard type of name is not string
   if (type != napi_string)
     REJECT_ERROR_RETURN(
         "Source property must have a 'name' sub-property that is of type string.",
@@ -219,24 +265,30 @@ napi_value receive(napi_env env, napi_callback_info info)
         "Source property must have a 'urlAddress' sub-property that is of type string.",
         GRANDIOSE_INVALID_ARGS);
 
+  // Populate carrier with new instance
   c->source = new NDIlib_source_t();
   c->status = makeNativeSource(env, source, c->source);
   REJECT_RETURN;
 
+  // Set color format for carrier based on config
   c->status = napi_get_named_property(env, config, "colorFormat", &colorFormat);
   REJECT_RETURN;
   c->status = napi_typeof(env, colorFormat, &type);
   REJECT_RETURN;
   if (type != napi_undefined)
   {
+    // Guard color format is not number
     if (type != napi_number)
       REJECT_ERROR_RETURN(
           "Color format property must be a number.",
           GRANDIOSE_INVALID_ARGS);
+
+    // Get  enum (numeric) value of color format
     int32_t enumValue;
     c->status = napi_get_value_int32(env, colorFormat, &enumValue);
     REJECT_RETURN;
 
+    // Set color format from numeric value
     c->colorFormat = (NDIlib_recv_color_format_e)enumValue;
     if (!validColorFormat(c->colorFormat))
       REJECT_ERROR_RETURN(
@@ -244,33 +296,39 @@ napi_value receive(napi_env env, napi_callback_info info)
           GRANDIOSE_INVALID_ARGS);
   }
 
+  // Bandwidth property
   c->status = napi_get_named_property(env, config, "bandwidth", &bandwidth);
   REJECT_RETURN;
   c->status = napi_typeof(env, bandwidth, &type);
   REJECT_RETURN;
+  // If bandwidth property set
   if (type != napi_undefined)
   {
+    // Guard bandwidth is not a number
     if (type != napi_number)
       REJECT_ERROR_RETURN(
           "Bandwidth property must be a number.",
           GRANDIOSE_INVALID_ARGS);
+
     int32_t enumValue;
     c->status = napi_get_value_int32(env, bandwidth, &enumValue);
     REJECT_RETURN;
 
     c->bandwidth = (NDIlib_recv_bandwidth_e)enumValue;
+    // Guard validate bandwidth enum value
     if (!validBandwidth(c->bandwidth))
-      REJECT_ERROR_RETURN(
-          "Invalid bandwidth value.",
-          GRANDIOSE_INVALID_ARGS);
+      REJECT_ERROR_RETURN("Invalid bandwidth value.", GRANDIOSE_INVALID_ARGS);
   }
 
+  // Allow video fields (whether is interlaced) property
   c->status = napi_get_named_property(env, config, "allowVideoFields", &allowVideoFields);
   REJECT_RETURN;
   c->status = napi_typeof(env, allowVideoFields, &type);
   REJECT_RETURN;
+  // If allow video fields property set
   if (type != napi_undefined)
   {
+    // Guard invalid property type
     if (type != napi_boolean)
       REJECT_ERROR_RETURN(
           "Allow video fields property must be a Boolean.",
@@ -279,15 +337,20 @@ napi_value receive(napi_env env, napi_callback_info info)
     REJECT_RETURN;
   }
 
+  // Name property
   c->status = napi_get_named_property(env, config, "name", &name);
   REJECT_RETURN;
   c->status = napi_typeof(env, name, &type);
+  // If property is set
   if (type != napi_undefined)
   {
+    // Guard name is not string
     if (type != napi_string)
       REJECT_ERROR_RETURN(
           "Optional name property must be a string when present.",
           GRANDIOSE_INVALID_ARGS);
+
+    // Parse name value
     size_t namel;
     c->status = napi_get_value_string_utf8(env, name, nullptr, 0, &namel);
     REJECT_RETURN;
@@ -299,19 +362,25 @@ napi_value receive(napi_env env, napi_callback_info info)
   napi_value resource_name;
   c->status = napi_create_string_utf8(env, "Receive", NAPI_AUTO_LENGTH, &resource_name);
   REJECT_RETURN;
-  c->status = napi_create_async_work(env, NULL, resource_name, receiveExecute,
-                                     receiveComplete, c, &c->_request);
+  c->status = napi_create_async_work(env, NULL, resource_name,
+                                     receiveExecute, receiveComplete,
+                                     c, &c->_request);
   REJECT_RETURN;
+
+  // Perform async work
   c->status = napi_queue_async_work(env, c->_request);
   REJECT_RETURN;
 
   return promise;
 }
 
+// Video receive callback
 void videoReceiveExecute(napi_env env, void *data)
 {
+  // Data carrier based on passed data
   dataCarrier *c = (dataCarrier *)data;
 
+  // Switch statement for captured frame
   switch (NDIlib_recv_capture_v2(c->recv, &c->videoFrame, nullptr, nullptr, c->wait))
   {
   case NDIlib_frame_type_none:
@@ -334,10 +403,13 @@ void videoReceiveExecute(napi_env env, void *data)
   }
 }
 
+// upon promise complete for Video frame receive
 void videoReceiveComplete(napi_env env, napi_status asyncStatus, void *data)
 {
+  // Data carrier based on passed data
   dataCarrier *c = (dataCarrier *)data;
 
+  // Guard async status not ok
   if (asyncStatus != napi_ok)
   {
     c->status = asyncStatus;
@@ -345,45 +417,54 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void *data)
   }
   REJECT_STATUS;
 
+  // Parse promise result object
   napi_value result;
   c->status = napi_create_object(env, &result);
   REJECT_STATUS;
 
+  // Parse precise timestamp from videoFrame timestamp
   int32_t ptps, ptpn;
   ptps = (int32_t)(c->videoFrame.timestamp / 10000000);
   ptpn = (c->videoFrame.timestamp % 10000000) * 100;
 
+  // Parse video property
   napi_value param;
   c->status = napi_create_string_utf8(env, "video", NAPI_AUTO_LENGTH, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "type", param);
   REJECT_STATUS;
 
+  // Parse xres (resolution width) property
   c->status = napi_create_int32(env, c->videoFrame.xres, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "xres", param);
   REJECT_STATUS;
 
+  // Parse yres (resolution height) property
   c->status = napi_create_int32(env, c->videoFrame.yres, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "yres", param);
   REJECT_STATUS;
 
+  // Parse framerate numerator property
   c->status = napi_create_int32(env, c->videoFrame.frame_rate_N, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "frameRateN", param);
   REJECT_STATUS;
 
+  // Parse framerate denominator property
   c->status = napi_create_int32(env, c->videoFrame.frame_rate_D, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "frameRateD", param);
   REJECT_STATUS;
 
+  // Parse picture aspect ratio property
   c->status = napi_create_double(env, (double)c->videoFrame.picture_aspect_ratio, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "pictureAspectRatio", param);
   REJECT_STATUS;
 
+  // Parse picture aspect ratio property
   napi_value params, paramn;
   c->status = napi_create_int32(env, ptps, &params);
   REJECT_STATUS;
@@ -421,6 +502,7 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void *data)
   c->status = napi_set_named_property(env, result, "lineStrideBytes", param);
   REJECT_STATUS;
 
+  // If metadata for videoFrame is set, then parse metadata
   if (c->videoFrame.p_metadata != nullptr)
   {
     c->status = napi_create_string_utf8(env, c->videoFrame.p_metadata, NAPI_AUTO_LENGTH, &param);
@@ -429,19 +511,23 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void *data)
     REJECT_STATUS;
   }
 
+  // Copy buffer of videoFrame data
   c->status = napi_create_buffer_copy(env,
                                       c->videoFrame.line_stride_in_bytes * c->videoFrame.yres,
-                                      (void *)c->videoFrame.p_data, nullptr, &param);
+                                      (void *)c->videoFrame.p_data,
+                                      nullptr, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "data", param);
   REJECT_STATUS;
 
+  // Free video frame
   NDIlib_recv_free_video_v2(c->recv, &c->videoFrame);
 
   napi_status status;
   status = napi_resolve_deferred(env, c->_deferred, result);
   FLOATING_STATUS;
 
+  // Cleanup
   tidyCarrier(env, c);
 }
 
@@ -970,6 +1056,8 @@ void dataReceiveComplete(napi_env env, napi_status asyncStatus, void *data)
 
 napi_value dataReceive(napi_env env, napi_callback_info info)
 {
-  return dataAndAudioReceive(env, info, "DataReceive",
-                             dataReceiveExecute, dataReceiveComplete);
+  return dataAndAudioReceive(env, info,
+                             "DataReceive",
+                             dataReceiveExecute,
+                             dataReceiveComplete);
 }
