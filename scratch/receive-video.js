@@ -17,10 +17,12 @@ const grandiose = require('../index')
 
 async function run() {
   const availableSources = await grandiose.find()
-  console.log('>>> FOUND >>>', availableSources)
+  console.log('>>> FOUND SOURCES >>>', availableSources)
 
-  console.log(grandiose)
-  const receiver = await grandiose.receive({ source: availableSources[0] })
+  const receiver = await grandiose.receive({
+    source: availableSources[0],
+    allowVideoFields: false
+  })
   console.log('>>> RECEIVER >>>', receiver)
 
   for (let i = 0; i < 10; i++) {
@@ -60,3 +62,6 @@ async function run() {
 }
 
 run()
+  .catch(e => {
+    console.log('Error catched in global scope', e)
+  })
