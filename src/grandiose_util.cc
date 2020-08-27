@@ -185,14 +185,21 @@ int32_t rejectStatus(napi_env env, carrier *c, char *file, int32_t line)
     napi_value errorValue, errorCode, errorMsg;
     napi_status status;
     char errorChars[20];
+
     if (c->status < GRANDIOSE_ERROR_START)
     {
       const napi_extended_error_info *errorInfo;
       status = napi_get_last_error_info(env, &errorInfo);
       FLOATING_STATUS;
+
       c->errorMsg = std::string(errorInfo->error_message);
     }
-    char *extMsg = (char *)malloc(sizeof(char) * c->errorMsg.length() + 200);
+
+    // printf("Received Error with length: %i\n", c->errorMsg.length());
+    // printf("Received Error: %s\n", c->errorMsg.c_str());
+
+    char *extMsg = (char *)malloc(sizeof(char) * c->errorMsg.length());
+    // printf("After malloc..\n");
     // sprintf(
     //     extMsg, "In file %s on line %i, found error: %s",
     //     file, line, c->errorMsg.c_str());
@@ -201,6 +208,7 @@ int32_t rejectStatus(napi_env env, carrier *c, char *file, int32_t line)
     FLOATING_STATUS;
     status = napi_create_string_utf8(env, extMsg, NAPI_AUTO_LENGTH, &errorMsg);
     FLOATING_STATUS;
+    // printf("After create string..\n");
     status = napi_create_error(env, errorCode, errorMsg, &errorValue);
     FLOATING_STATUS;
     status = napi_reject_deferred(env, c->_deferred, errorValue);

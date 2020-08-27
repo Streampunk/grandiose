@@ -83,47 +83,57 @@ void receiveComplete(napi_env env, napi_status asyncStatus, void *data)
   }
   REJECT_STATUS;
 
-  // Read result object value from environment
+  // Create result object value to prepare to return
   napi_value result;
   c->status = napi_create_object(env, &result);
   REJECT_STATUS;
 
-  // Extract properties
-  // Embedded
+  // Set properties/functions in return object
+
+  // Create external value embedded
+  // and attach external value to property on result object
   napi_value embedded;
   c->status = napi_create_external(env, c->recv, finalizeReceive, nullptr, &embedded);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "embedded", embedded);
   REJECT_STATUS;
 
-  // Video frame
+  // Create function in environment: 'video' to request video frame
+  // and attach function as property on result object
   napi_value videoFn;
-  c->status = napi_create_function(env, "video", NAPI_AUTO_LENGTH, videoReceive,
-                                   nullptr, &videoFn);
+  c->status = napi_create_function(env,
+                                   "video", NAPI_AUTO_LENGTH,
+                                   videoReceive, nullptr, &videoFn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "video", videoFn);
   REJECT_STATUS;
 
-  // Audio frame
+  // Create function in environment: 'audio' to request audio frame
+  // and attach function as property on result object
   napi_value audioFn;
-  c->status = napi_create_function(env, "audio", NAPI_AUTO_LENGTH, audioReceive,
-                                   nullptr, &audioFn);
+  c->status = napi_create_function(env,
+                                   "audio", NAPI_AUTO_LENGTH,
+                                   audioReceive, nullptr, &audioFn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "audio", audioFn);
   REJECT_STATUS;
 
-  // Metadata frame
+  // Create function in environment: 'metadata' to request metadata frame
+  // and attach function as property on result object
   napi_value metadataFn;
-  c->status = napi_create_function(env, "metadata", NAPI_AUTO_LENGTH, metadataReceive,
-                                   nullptr, &metadataFn);
+  c->status = napi_create_function(env,
+                                   "metadata", NAPI_AUTO_LENGTH,
+                                   metadataReceive, nullptr, &metadataFn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "metadata", metadataFn);
   REJECT_STATUS;
 
-  // Data (genric) frame
+  // Create function in environment: 'data' to request genric Data frame
+  // and attach function as property on result object
   napi_value dataFn;
-  c->status = napi_create_function(env, "data", NAPI_AUTO_LENGTH, dataReceive,
-                                   nullptr, &dataFn);
+  c->status = napi_create_function(env,
+                                   "data", NAPI_AUTO_LENGTH,
+                                   dataReceive, nullptr, &dataFn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "data", dataFn);
   REJECT_STATUS;
@@ -379,23 +389,28 @@ void videoReceiveExecute(napi_env env, void *data)
   // Data carrier based on passed data
   dataCarrier *c = (dataCarrier *)data;
 
-  // Switch statement for captured frame
+  // Switch statement for captured frame - return error if not desired type
   switch (NDIlib_recv_capture_v2(c->recv, &c->videoFrame, nullptr, nullptr, c->wait))
   {
   case NDIlib_frame_type_none:
     // printf("No data received.\n");
+    // Setting carrier status and error message
     c->status = GRANDIOSE_NOT_FOUND;
     c->errorMsg = "No video data received in the requested time interval.";
     break;
 
   // Video data
   case NDIlib_frame_type_video:
-    /* printf("Video data %i received (%dx%d at %d/%d).\n", &c->videoFrame, c->videoFrame.xres, c->videoFrame.yres,
-        c->videoFrame.frame_rate_N, c->videoFrame.frame_rate_D); */
+    // printf(
+    //     "Video data %i received (%dx%d at %d/%d).\n",
+    //     &c->videoFrame,
+    //     c->videoFrame.xres, c->videoFrame.yres,
+    //     c->videoFrame.frame_rate_N, c->videoFrame.frame_rate_D);
     break;
 
   default:
     // printf("Other kind of data received.\n");
+    // Setting carrier status and error message
     c->status = GRANDIOSE_NOT_VIDEO;
     c->errorMsg = "Non-video data received on video capture.";
     break;
@@ -416,7 +431,20 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void *data)
   }
   REJECT_STATUS;
 
-  // Parse promise result object
+  // Guard video frame received invalid resolution
+  if (c->videoFrame.xres == 0 || c->videoFrame.yres == 0)
+  {
+    c->status = GRANDIOSE_RECEIVE_CREATE_FAIL;
+    c->errorMsg = "Video frame received has invalid resolution.";
+    printf("Invalid video frame size: %ix%i\n", c->videoFrame.xres, c->videoFrame.yres);
+    return;
+  }
+  REJECT_STATUS;
+
+  // Debug
+  printf("Video frame size: %ix%i\n", c->videoFrame.xres, c->videoFrame.yres);
+
+  // Prepare result object for promise
   napi_value result;
   c->status = napi_create_object(env, &result);
   REJECT_STATUS;
@@ -426,44 +454,46 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void *data)
   ptps = (int32_t)(c->videoFrame.timestamp / 10000000);
   ptpn = (c->videoFrame.timestamp % 10000000) * 100;
 
-  // Parse video property
+  // Param to reuse to parse values to properties for result object
   napi_value param;
+
+  // Parse type property (with string 'video' as value) to result object
   c->status = napi_create_string_utf8(env, "video", NAPI_AUTO_LENGTH, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "type", param);
   REJECT_STATUS;
 
-  // Parse xres (resolution width) property
+  // Parse xres (resolution width) property to result object
   c->status = napi_create_int32(env, c->videoFrame.xres, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "xres", param);
   REJECT_STATUS;
 
-  // Parse yres (resolution height) property
+  // Parse yres (resolution height) property to result object
   c->status = napi_create_int32(env, c->videoFrame.yres, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "yres", param);
   REJECT_STATUS;
 
-  // Parse framerate numerator property
+  // Parse framerate numerator property to result object
   c->status = napi_create_int32(env, c->videoFrame.frame_rate_N, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "frameRateN", param);
   REJECT_STATUS;
 
-  // Parse framerate denominator property
+  // Parse framerate denominator property to result object
   c->status = napi_create_int32(env, c->videoFrame.frame_rate_D, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "frameRateD", param);
   REJECT_STATUS;
 
-  // Parse picture aspect ratio property
+  // Parse picture aspect ratio property to result object
   c->status = napi_create_double(env, (double)c->videoFrame.picture_aspect_ratio, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "pictureAspectRatio", param);
   REJECT_STATUS;
 
-  // Parse picture aspect ratio property
+  // Parse timestamp property as array to result object
   napi_value params, paramn;
   c->status = napi_create_int32(env, ptps, &params);
   REJECT_STATUS;
@@ -478,11 +508,13 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void *data)
   c->status = napi_set_named_property(env, result, "timestamp", param);
   REJECT_STATUS;
 
+  // Parse frameFormatType property to result object
   c->status = napi_create_int32(env, c->videoFrame.frame_format_type, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "frameFormatType", param);
   REJECT_STATUS;
 
+  // Parse timecode property as array to result object
   c->status = napi_create_int32(env, (int32_t)c->videoFrame.timecode / 10000000, &params);
   REJECT_STATUS;
   c->status = napi_create_int32(env, (c->videoFrame.timecode % 10000000) * 100, &paramn);
@@ -496,6 +528,7 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void *data)
   c->status = napi_set_named_property(env, result, "timecode", param);
   REJECT_STATUS;
 
+  // Parse lineStrideInBytes property to result object
   c->status = napi_create_int32(env, c->videoFrame.line_stride_in_bytes, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "lineStrideBytes", param);
@@ -508,11 +541,23 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void *data)
     REJECT_STATUS;
     c->status = napi_set_named_property(env, result, "metadata", param);
     REJECT_STATUS;
+
+    // printf("Had metadata!\n");
   }
 
+  // printf("Video frame data: %s\n", c->videoFrame.p_data);
+  // printf("Video frame size: %ix%i\n", c->videoFrame.xres, c->videoFrame.yres);
+  // printf("Video frame line stride: %i\n", c->videoFrame.line_stride_in_bytes);
+
+  // Resolve buffer size based on line_stride_in_bytes (number of bytes used per line)
+  // and height of image
+  // Somehow these videoFrame values can be zero = throws segmentation fault
+  int32_t bufferSize = c->videoFrame.line_stride_in_bytes * c->videoFrame.yres;
+
+  // printf("Buffersize: %i\n", bufferSize);
+
   // Copy buffer of videoFrame data
-  c->status = napi_create_buffer_copy(env,
-                                      c->videoFrame.line_stride_in_bytes * c->videoFrame.yres,
+  c->status = napi_create_buffer_copy(env, bufferSize,
                                       (void *)c->videoFrame.p_data, nullptr, &param);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "data", param);
@@ -554,10 +599,13 @@ napi_value videoReceive(napi_env env, napi_callback_info info)
 
   if (argc >= 1)
   {
+    // Read typeof first argument
     c->status = napi_typeof(env, args[0], &type);
     REJECT_RETURN;
+    // Guard type of first argument must be number
     if (type == napi_number)
     {
+      // Set carrier property wait to value from first argument
       c->status = napi_get_value_uint32(env, args[0], &c->wait);
       REJECT_RETURN;
     }
@@ -566,8 +614,9 @@ napi_value videoReceive(napi_env env, napi_callback_info info)
   napi_value resource_name;
   c->status = napi_create_string_utf8(env, "VideoReceive", NAPI_AUTO_LENGTH, &resource_name);
   REJECT_RETURN;
-  c->status = napi_create_async_work(env, NULL, resource_name, videoReceiveExecute,
-                                     videoReceiveComplete, c, &c->_request);
+  c->status = napi_create_async_work(env, NULL, resource_name,
+                                     videoReceiveExecute, videoReceiveComplete,
+                                     c, &c->_request);
   REJECT_RETURN;
   c->status = napi_queue_async_work(env, c->_request);
   REJECT_RETURN;
