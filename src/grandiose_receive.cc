@@ -42,7 +42,7 @@ void receiveExecute(napi_env env, void* data) {
   receiveConfig.color_format = c->colorFormat;
   receiveConfig.bandwidth = c->bandwidth;
   receiveConfig.allow_video_fields = c->allowVideoFields;
-  receiveConfig.p_ndi_name = c->name;
+  receiveConfig.p_ndi_recv_name = c->name;
 
   c->recv = NDIlib_recv_create_v3(&receiveConfig);
   if (!c->recv) {
