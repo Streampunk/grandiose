@@ -38,7 +38,6 @@ void receiveExecute(napi_env env, void* data) {
   receiveCarrier* c = (receiveCarrier*) data;
 
   NDIlib_recv_create_v3_t receiveConfig;
-  receiveConfig.source_to_connect_to = *c->source;
   receiveConfig.color_format = c->colorFormat;
   receiveConfig.bandwidth = c->bandwidth;
   receiveConfig.allow_video_fields = c->allowVideoFields;
@@ -106,8 +105,10 @@ void receiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   napi_value source, name, uri;
   c->status = napi_create_string_utf8(env, c->source->p_ndi_name, NAPI_AUTO_LENGTH, &name);
   REJECT_STATUS;
-  c->status = napi_create_string_utf8(env, c->source->p_url_address, NAPI_AUTO_LENGTH, &uri);
-  REJECT_STATUS;
+  if (c->source->p_url_address != NULL) {
+    c->status = napi_create_string_utf8(env, c->source->p_url_address, NAPI_AUTO_LENGTH, &uri);
+    REJECT_STATUS;
+  }
   c->status = napi_create_object(env, &source);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, source, "name", name);
@@ -202,8 +203,9 @@ napi_value receive(napi_env env, napi_callback_info info) {
   REJECT_RETURN;
   c->status = napi_typeof(env, checkType, &type);
   REJECT_RETURN;
-  if (type != napi_string) REJECT_ERROR_RETURN(
-    "Source property must have a 'urlAddress' sub-property that is of type string.",
+  
+  if (type != napi_undefined && type != napi_string) REJECT_ERROR_RETURN(
+    "Source 'urlAddress' sub-property must be of type string.",
     GRANDIOSE_INVALID_ARGS);
 
   c->source = new NDIlib_source_t();
@@ -370,6 +372,11 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void* data) {
   c->status = napi_set_element(env, param, 1, paramn);
   REJECT_STATUS;
   c->status = napi_set_named_property(env, result, "timestamp", param);
+  REJECT_STATUS;
+
+  c->status = napi_create_int32(env, c->videoFrame.FourCC, &param);
+  REJECT_STATUS;
+  c->status = napi_set_named_property(env, result, "fourCC", param);
   REJECT_STATUS;
 
   c->status = napi_create_int32(env, c->videoFrame.frame_format_type, &param);
@@ -725,7 +732,7 @@ void metadataReceiveExecute(napi_env env, void* data) {
     case NDIlib_frame_type_none:
       printf("No data received.\n");
       c->status = GRANDIOSE_NOT_FOUND;
-      c->errorMsg = "No audio data received in the requested time interval.";
+      c->errorMsg = "No metadata received in the requested time interval.";
       break;
 
     // Metadata
