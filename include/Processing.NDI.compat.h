@@ -7,7 +7,7 @@
 //
 //*************************************************************************************************************************************
 // 
-// Copyright(c) 2014-2020, NewTek, inc.
+// Copyright(c) 2014-2021, NewTek, inc.
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation 
 // files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, 
@@ -30,5 +30,6 @@
 #include <stdint.h>
 
 #ifndef INFINITE
-#define INFINITE 0xFFFFFFFF
+#define INFINITE INFINITE
+static const uint32_t INFINITE = 0xFFFFFFFF;
 #endif

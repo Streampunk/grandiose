@@ -7,7 +7,7 @@
 //
 //*************************************************************************************************************************************
 // 
-// Copyright(c) 2014-2020, NewTek, inc.
+// Copyright(c) 2014-2021, NewTek, inc.
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation 
 // files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, 
@@ -135,7 +135,7 @@ void NDIlib_framesync_free_audio_v2(// The frame sync instance data
 // This function will tell you the approximate current depth of the audio queue to give you an indication
 // of the number of audio samples you can request. Note that if you should treat the results of this function
 // with some care because in reality the frame-sync API is meant to dynamically resample audio to match the
-// rate that you are calling it. If you have an innacurate clock then this functon can be useful.
+// rate that you are calling it. If you have an inaccurate clock then this function can be useful.
 // for instance :
 //
 //  while(true)
@@ -147,7 +147,7 @@ void NDIlib_framesync_free_audio_v2(// The frame sync instance data
 //  }
 //
 // Obviously because audio is being received in real-time there is no guarantee after the call that the
-// number is correct since new samples might have been captured in that time. On syncronous use of this
+// number is correct since new samples might have been captured in that time. On synchronous use of this
 // function however this will be the minimum number of samples in the queue at any later time until
 // NDIlib_framesync_capture_audio is called.
 PROCESSINGNDILIB_API
@@ -166,16 +166,16 @@ int NDIlib_framesync_audio_queue_depth(NDIlib_framesync_instance_t p_instance);
 // that there has not yet been any video and act accordingly. For instance you might want
 // to display a constant frame output at a particular video format, or black.
 PROCESSINGNDILIB_API
-void NDIlib_framesync_capture_video( // The frame sync instance data
-                                     NDIlib_framesync_instance_t p_instance,
-                                     // The destination audio buffer that you wish to have filled in.
-                                     NDIlib_video_frame_v2_t* p_video_data,
-                                     // The frame type that you would prefer, all effort is made to match these.
-                                     NDIlib_frame_format_type_e field_type NDILIB_CPP_DEFAULT_VALUE(NDIlib_frame_format_type_progressive));
+void NDIlib_framesync_capture_video(// The frame sync instance data
+                                    NDIlib_framesync_instance_t p_instance,
+                                    // The destination audio buffer that you wish to have filled in.
+                                    NDIlib_video_frame_v2_t* p_video_data,
+                                    // The frame type that you would prefer, all effort is made to match these.
+                                    NDIlib_frame_format_type_e field_type NDILIB_CPP_DEFAULT_VALUE(NDIlib_frame_format_type_progressive));
 
 // Free audio returned by NDIlib_framesync_capture_video
 PROCESSINGNDILIB_API
-void NDIlib_framesync_free_video( // The frame sync instance data
-                                  NDIlib_framesync_instance_t p_instance,
-                                  // The destination audio buffer that you wish to have filled in.
-                                  NDIlib_video_frame_v2_t* p_video_data);
+void NDIlib_framesync_free_video(// The frame sync instance data
+                                 NDIlib_framesync_instance_t p_instance,
+                                 // The destination audio buffer that you wish to have filled in.
+                                 NDIlib_video_frame_v2_t* p_video_data);

@@ -7,7 +7,7 @@
 //
 //*************************************************************************************************************************************
 // 
-// Copyright(c) 2014-2020, NewTek, inc.
+// Copyright (C)2014-2021, NewTek, inc.
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation 
 // files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, 
@@ -117,10 +117,17 @@ bool NDIlib_recv_ptz_white_balance_manual(NDIlib_recv_instance_t p_instance, con
 PROCESSINGNDILIB_API
 bool NDIlib_recv_ptz_exposure_auto(NDIlib_recv_instance_t p_instance);
 
-// Manually set the camera exposure
+// Manually set the camera exposure iris
 // exposure_level = 0.0(dark) ... 1.0(light)
 PROCESSINGNDILIB_API
 bool NDIlib_recv_ptz_exposure_manual(NDIlib_recv_instance_t p_instance, const float exposure_level);
+
+// Manually set the camera exposure parameters
+// iris = 0.0(dark) ... 1.0(light)
+// gain = 0.0(dark) ... 1.0(light)
+// shutter_speed = 0.0(slow) ... 1.0(fast)
+PROCESSINGNDILIB_API
+bool NDIlib_recv_ptz_exposure_manual_v2(NDIlib_recv_instance_t p_instance, const float iris, const float gain, const float shutter_speed);
 
 // Recording control
 // This will start recording.If the recorder was already recording then the message is ignored.A filename is passed in as a "hint".Since the recorder might 
