@@ -15,6 +15,7 @@
 
 #include <cmath>
 #include <stddef.h>
+#include <string.h>
 #include <Processing.NDI.Lib.h>
 
 #ifdef _WIN32

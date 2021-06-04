@@ -442,7 +442,7 @@ void videoReceiveComplete(napi_env env, napi_status asyncStatus, void *data)
   REJECT_STATUS;
 
   // Debug
-  printf("Video frame size: %ix%i\n", c->videoFrame.xres, c->videoFrame.yres);
+  // printf("Video frame size: %ix%i\n", c->videoFrame.xres, c->videoFrame.yres);
 
   // Prepare result object for promise
   napi_value result;
