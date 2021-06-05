@@ -13,6 +13,8 @@
   limitations under the License.
 */
 
+#include <stddef.h>
+#include <cmath>
 #include <Processing.NDI.Lib.h>
 
 #ifdef _WIN32
@@ -26,11 +28,15 @@
 #include "grandiose_send.h"
 #include "grandiose_util.h"
 
-napi_value send(napi_env env, napi_callback_info info) {
+// Send audio frame
+napi_value send(napi_env env, napi_callback_info info)
+{
   napi_status status;
   napi_value result;
 
-  if (!NDIlib_initialize()) NAPI_THROW_ERROR("Failed to inittialise NDI subsystem.");
+  // Guard unable to initialize NDIlib
+  if (!NDIlib_initialize())
+    NAPI_THROW_ERROR("Failed to inittialise NDI subsystem.");
 
   // Create an NDI source that is called "My 16bpp Audio" and is clocked to the audio.
   NDIlib_send_create_t NDI_send_create_desc;
@@ -39,24 +45,27 @@ napi_value send(napi_env env, napi_callback_info info) {
 
   // We create the NDI finder
   NDIlib_send_instance_t pNDI_send = NDIlib_send_create(&NDI_send_create_desc);
-  if (!pNDI_send) NAPI_THROW_ERROR("Failed to create send instance.");
+  if (!pNDI_send)
+    NAPI_THROW_ERROR("Failed to create send instance.");
 
   // We are going to send 1920 audio samples at a time
   NDIlib_audio_frame_interleaved_16s_t NDI_audio_frame;
   NDI_audio_frame.sample_rate = 48000;
   NDI_audio_frame.no_channels = 2;
   NDI_audio_frame.no_samples = 1920;
-  NDI_audio_frame.p_data = (short*)malloc(1920 * 2 * sizeof(short));
+  NDI_audio_frame.p_data = (short *)malloc(1920 * 2 * sizeof(short));
 
-  for ( int x = 0 ; x < 1920 ; x++ ) {
-    short value = (short) (sin((x / 240.0) * 3.1415 * 2.0) * 28000);
+  for (int x = 0; x < 1920; x++)
+  {
+    short value = (short)(sin((x / 240.0) * 3.1415 * 2.0) * 28000);
     // printf("Next value %i.\n", value);
     NDI_audio_frame.p_data[x * 2] = value;
     NDI_audio_frame.p_data[x * 2 + 1] = value;
   }
   // We will send 1000 frames of audio.
-  for ( int idx = 0 ; idx < 1000 ; idx++ )
-  {	// Fill in the buffer with silence. It is likely that you would do something much smarter than this.
+  for (int idx = 0; idx < 1000; idx++)
+  {
+    // Fill in the buffer with silence. It is likely that you would do something much smarter than this.
     //memset(NDI_audio_frame.p_data, 0, NDI_audio_frame.no_samples*NDI_audio_frame.no_channels*sizeof(short));
 
     // We now submit the frame. Note that this call will be clocked so that we end up submitting
@@ -64,7 +73,7 @@ napi_value send(napi_env env, napi_callback_info info) {
     NDIlib_util_send_send_audio_interleaved_16s(pNDI_send, &NDI_audio_frame);
 
     // Just display something helpful
-    printf("Frame number %d sent.\n", idx);
+    // printf("Frame number %d sent.\n", idx);
   }
 
   // Free the video frame

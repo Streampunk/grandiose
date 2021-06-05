@@ -62,3 +62,8 @@ typings/
 
 # node-gyp built artifacts
 build
+
+._*
+.DS_Store
+
+dist

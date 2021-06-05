@@ -13,8 +13,8 @@
   limitations under the License.
 */
 
-#include <cstdio>
 #include <chrono>
+#include <cstdio>
 #include <Processing.NDI.Lib.h>
 
 #ifdef _WIN32
@@ -25,16 +25,19 @@
 #endif // _WIN64
 #endif // _WIN32
 
-#include "grandiose_util.h"
-#include "grandiose_find.h"
-#include "grandiose_send.h"
-#include "grandiose_receive.h"
 #include "node_api.h"
+#include "grandiose_util.h"
 
-napi_value version(napi_env env, napi_callback_info info) {
+#include "grandiose_find.h"
+#include "grandiose_receive.h"
+#include "grandiose_send.h"
+#include "grandiose_send_video.h"
+
+napi_value version(napi_env env, napi_callback_info info)
+{
   napi_status status;
 
-  const char* ndiVersion = NDIlib_version();
+  const char *ndiVersion = NDIlib_version();
   napi_value result;
   status = napi_create_string_utf8(env, ndiVersion, NAPI_AUTO_LENGTH, &result);
   CHECK_STATUS;
@@ -42,7 +45,8 @@ napi_value version(napi_env env, napi_callback_info info) {
   return result;
 }
 
-napi_value isSupportedCPU(napi_env env, napi_callback_info info) {
+napi_value isSupportedCPU(napi_env env, napi_callback_info info)
+{
   napi_status status;
 
   napi_value result;
@@ -52,16 +56,23 @@ napi_value isSupportedCPU(napi_env env, napi_callback_info info) {
   return result;
 }
 
-napi_value Init(napi_env env, napi_value exports) {
+napi_value Init(napi_env env, napi_value exports)
+{
   napi_status status;
   napi_property_descriptor desc[] = {
-    DECLARE_NAPI_METHOD("version", version),
-    DECLARE_NAPI_METHOD("find", find),
-    DECLARE_NAPI_METHOD("isSupportedCPU", isSupportedCPU),
-    DECLARE_NAPI_METHOD("send", send),
-    DECLARE_NAPI_METHOD("receive", receive)
-   };
-  status = napi_define_properties(env, exports, 5, desc);
+      // Methods in alphabetically order
+      DECLARE_NAPI_METHOD("find", find),
+      DECLARE_NAPI_METHOD("isSupportedCPU", isSupportedCPU),
+      DECLARE_NAPI_METHOD("receive", receive),
+      DECLARE_NAPI_METHOD("send", send),
+      DECLARE_NAPI_METHOD("sendVideo", sendVideo),
+      DECLARE_NAPI_METHOD("version", version)};
+
+  // Get number of properties in array
+  int arrSize = *(&desc + 1) - desc;
+
+  // Export properties (methods)
+  status = napi_define_properties(env, exports, arrSize, desc);
   CHECK_STATUS;
 
   return exports;

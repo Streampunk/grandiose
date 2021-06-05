@@ -7,32 +7,43 @@ This module will allow a Node.JS program to find, receive and send NDI(tm) video
 
 NDI(tm) is a realisation of a grand vision for what IP media streams should and can be, hence a steampunk themed name of _gra-NDI-ose_.
 
-## Installation
+# Installation
 
-Grandiose only supports Windows x64 platforms at this time. Future platforms may be added in the future.
+Install [Node.js](http://nodejs.org/) for your platform. This software has been developed against the long term stable (LTS) release. Depending on OS, it can be necessary to perform installation of third party software before using Grandiose. Read the Prerequisites section below.
 
-Install [Node.js](http://nodejs.org/) for your platform. This software has been developed against the long term stable (LTS) release.
+## Prerequisites
 
+### Mac
+Install xcode command-line tools:
+```
+xcode-select --install
+```
+
+### Windows
 On Windows, the NDI(tm) DLL requires that the Visual Studio 2013 C run-times are installed, available from:
 
 https://www.microsoft.com/en-us/download/details.aspx?id=40784
 
+## Easy install via NPM or yarn
 Grandiose is designed to be `require`d to use from your own application to provide async processing. For example:
+```
+npm install --save grandiose
+# or
+yarn add -d grandiose
+```
 
-    npm install --save grandiose
-
-## Using grandiose
+# Using grandiose
 
 ### Finding streams
 
 A list of all currently available NDI(tm) sources available on the current local area network (or VLAN) can be retrieved. For example, to print a list of sources to the console, try:
 
 ```javascript
-const grandiose = require('grandiose');
+const grandiose = require('grandiose')
 
 grandiose.find()
   .then(console.log)
-  .catch(console.error);
+  .catch(console.error)
 ```
 
 The result is an array, for example here are some local sources to machine :
@@ -48,7 +59,7 @@ The result is an array, for example here are some local sources to machine :
 
 The find operation can be configured with an options object and a wait time in measured in milliseconds:
 
-    grandiose.find(<opts>, <wait_time>);
+    grandiose.find(<opts>, <wait_time>)
 
 The options are as follows:
 
@@ -69,14 +80,14 @@ grandiose.find({
 First of all, find a stream using the method above or create an object representing a source:
 
 ```javascript
-const grandiose = require('grandiose');
-let source = { name: "<source_name>", urlAddress: "<IP-address>:<port>" };
+const grandiose = require('grandiose')
+const source = { name: "<source_name>", urlAddress: "<IP-address>:<port>" }
 ```
 
 In an `async` function, create a receiver as follows:
 
 ```javascript
-let receiver = await grandiose.receive({ source: source });
+const receiver = await grandiose.receive({ source: source })
 ```
 
 An example of the receiver object resolved by this promise is shown below:
@@ -100,7 +111,7 @@ The `embedded` value is the native receiver returned by the NDI(tm) SDK. The `vi
 The `colorFormat`, `bandwidth` and `allowVideoFields` parameters are those used to set up the receiver. These can be configured as options when creating the receiver as follows:
 
 ```javascript
-let receiver = await grandiose.receive({
+const receiver = await grandiose.receive({
   source: source, // required source parameter
   // Preferred colour space - without and with alpha channel
   // One of COLOR_FORMAT_RGBX_RGBA, COLOR_FORMAT_BGRX_BGRA,
@@ -115,7 +126,7 @@ let receiver = await grandiose.receive({
   allowVideoFields: true, // default is true
   // An optional name for the receiver, otherwise one will be generated
   name: "rooftop"
-}, );
+}, )
 ```
 
 #### Video
@@ -123,13 +134,13 @@ let receiver = await grandiose.receive({
 Request video frames from the source as follows:
 
 ```javascript
-let timeout = 5000; // Optional timeout, default is 10000ms
+const timeout = 5000 // Optional timeout, default is 10000ms
 try {
   for ( let x = 0 ; x < 10 ; x++) {
-    let videoFrame = await receiver.video(timeout);
-    console.log(videoFrame);
+    const videoFrame = await receiver.video(timeout)
+    console.log(videoFrame)
   }
-} catch (e) { console.error(e); }
+} catch (e) { console.error(e) }
 ```
 
 Here is the output associated with a video frame created by an NDI(tm) test pattern:
@@ -159,8 +170,8 @@ The `receiver` instance will disconnect on the next garbage collection, so make 
 Audio follows a similar pattern to video, except that a couple of options are available to control for format of audio returned into Javasript.
 
 ```javascript
-let timeout = 8000; // Optional timeout value in ms
-let audioFrame = await receiver.audio({
+const timeout = 8000 // Optional timeout value in ms
+const audioFrame = await receiver.audio({
     // One of three audio formats that NDI(tm) utilities can provide:
     //  grandiose.AUDIO_FORMAT_INT_16_INTERLEAVED,
     //  AUDIO_FORMAT_FLOAT_32_INTERLEAVED and the default value of
@@ -169,7 +180,7 @@ let audioFrame = await receiver.audio({
     // The audio reference level in dB. This specifies how many dB above
     // the reference level (+4dBU) is the full range of integer audio.
     referenceLevel: 0 // default is 0dB
-  }, timeout);
+  }, timeout)
 ```
 
 An example of an audio frame resolved from this promise is:
@@ -192,7 +203,7 @@ An example of an audio frame resolved from this promise is:
 Follows a similar pattern to video and audio, waiting for any metadata messages in the stream.
 
 ```javascript
-let metadataFrame = await receiver.metadata();
+const metadataFrame = await receiver.metadata()
 ```
 
 Result is an object with a data property that is string containing the metadata, expected to be a short XML document.
@@ -202,9 +213,9 @@ Result is an object with a data property that is string containing the metadata,
 A means to receive the next available data payload in the stream, whether that is video, audio or metadata, allowing the application to filter the streams as required based on the `type` parameter. The optional arguments used for audio can also be used here.
 
 ```javascript
-let dataFrame = await receiver.data();
+const dataFrame = await receiver.data()
 if (dataFrame.type == 'video') { /* Process just the video */ }
-else if (dataFrame.type == 'metadata') { console.log(dataFrame.data); }
+else if (dataFrame.type == 'metadata') { console.log(dataFrame.data) }
 ```
 
 ### Sending streams
@@ -215,11 +226,11 @@ To follow.
 
 To find out the version of NDI(tm), use:
 
-    grandiose.version(); // e.g. 'NDI SDK WIN64 00:29:47 Jun 26 2018 3.5.9.0'
+    grandiose.version() // e.g. 'NDI SDK WIN64 00:29:47 Jun 26 2018 3.5.9.0'
 
 To check if the installed CPU is supported for NDI(tm), use:
 
-    grandiose.isSupportedCPU(); // e.g. true
+    grandiose.isSupportedCPU() // e.g. true
 
 ## Status, support and further development
 
