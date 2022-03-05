@@ -14,6 +14,7 @@
 */
 
 #include <chrono>
+#include <cstddef>
 #include <Processing.NDI.Lib.h>
 #include <inttypes.h>
 

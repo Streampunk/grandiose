@@ -18,6 +18,7 @@
 
 #include "node_api.h"
 #include "grandiose_util.h"
+#include <cstddef>
 #include <Processing.NDI.Lib.h>
 
 napi_value find(napi_env env, napi_callback_info info);

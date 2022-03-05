@@ -15,6 +15,7 @@
 
 #include <cstdio>
 #include <chrono>
+#include <cstddef>
 #include <Processing.NDI.Lib.h>
 
 #ifdef _WIN32

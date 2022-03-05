@@ -19,6 +19,7 @@
 #include <chrono>
 #include <stdio.h>
 #include <string>
+#include <cstddef>
 #include <Processing.NDI.Lib.h>
 #include "node_api.h"
 
