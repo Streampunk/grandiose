@@ -31,18 +31,27 @@
               "destination": "build/Release",
               "files": [
                 "lib/linux_x64/libndi.so",
-                "lib/linux_x64/libndi.so.4",
-                "lib/linux_x64/libndi.so.4.5.3",
+                "lib/linux_x64/libndi.so.5",
+                "lib/linux_x64/libndi.so.5.1.1",
               ]
             }
           ],
+          "link_settings": {
+            "libraries": [
+              "<(module_root_dir)/build/Release/libndi.so.5"
+            ],
+            "ldflags": [
+              "-L<@(module_root_dir)/build/Release",
+              "-Wl,-rpath,<@(module_root_dir)/build/Release"
+            ]
+          },
         }],
         ["OS=='mac'", {
           "copies":[
             {
               "destination": "build/Release",
               "files": [
-                "lib/mac_x64/libndi.4.dylib"
+                "lib/mac_x64/libndi.5.dylib"
               ]
             }
           ],
