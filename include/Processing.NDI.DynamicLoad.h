@@ -1,29 +1,33 @@
 #pragma once
 
-// NOTE : The following MIT license applies to this file ONLY and not to the SDK as a whole. Please review the SDK documentation 
-// for the description of the full license terms, which are also provided in the file "NDI License Agreement.pdf" within the SDK or 
-// online at http://new.tk/ndisdk_license/. Your use of any part of this SDK is acknowledgment that you agree to the SDK license 
-// terms. The full NDI SDK may be downloaded at http://ndi.tv/
+// NOTE : The following MIT license applies to this file ONLY and not to the SDK as a whole. Please review
+// the SDK documentation for the description of the full license terms, which are also provided in the file
+// "NDI License Agreement.pdf" within the SDK or online at http://new.tk/ndisdk_license/. Your use of any
+// part of this SDK is acknowledgment that you agree to the SDK license terms. The full NDI SDK may be
+// downloaded at http://ndi.tv/
 //
-//*************************************************************************************************************************************
-// 
-// Copyright (C)2014-2021, NewTek, inc.
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation 
-// files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, 
-// merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons to whom the Software is 
-// furnished to do so, subject to the following conditions :
+//***********************************************************************************************************
 //
-// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE 
-// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
-// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+// Copyright (C)2014-2022, NewTek, inc.
 //
-//*************************************************************************************************************************************
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+// associated documentation files(the "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+// copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
+// following conditions :
+//
+// The above copyright notice and this permission notice shall be included in all copies or substantial
+// portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+// EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+//***********************************************************************************************************
 
-typedef struct NDIlib_v4_5
+typedef struct NDIlib_v5
 {	// V1.5
 	union
 	{	bool(*initialize)(void);
@@ -565,30 +569,35 @@ typedef struct NDIlib_v4_5
 	{	int(*framesync_audio_queue_depth)(NDIlib_framesync_instance_t p_instance);
 		PROCESSINGNDILIB_DEPRECATED int(*NDIlib_framesync_audio_queue_depth)(NDIlib_framesync_instance_t p_instance);
 	};
-	
-	// v4.5
+
+	// v5
 	union
-	{	bool(*recv_ptz_exposure_manual_v2)(NDIlib_framesync_instance_t p_instance, const float iris, const float gain, const float shutter_speed);
-		PROCESSINGNDILIB_DEPRECATED bool(*NDIlib_recv_ptz_exposure_manual_v2)(NDIlib_framesync_instance_t p_instance, const float iris, const float gain, const float shutter_speed);
+	{	bool(*recv_ptz_exposure_manual_v2)(NDIlib_recv_instance_t p_instance, const float iris, const float gain, const float shutter_speed);
+		PROCESSINGNDILIB_DEPRECATED bool(*NDIlib_recv_ptz_exposure_manual_v2)(NDIlib_recv_instance_t p_instance, const float iris, const float gain, const float shutter_speed);
 	};
 
-} NDIlib_v4_5;
+} NDIlib_v5;
 
-typedef struct NDIlib_v4_5 NDIlib_v4;
-typedef struct NDIlib_v4_5 NDIlib_v3;
-typedef struct NDIlib_v4_5 NDIlib_v2;
+typedef struct NDIlib_v5 NDIlib_v4_5;
+typedef struct NDIlib_v5 NDIlib_v4;
+typedef struct NDIlib_v5 NDIlib_v3;
+typedef struct NDIlib_v5 NDIlib_v2;
 
-// Load the library
+// Load the library.
 PROCESSINGNDILIB_API
+const NDIlib_v5* NDIlib_v5_load(void);
+
+PROCESSINGNDILIB_API PROCESSINGNDILIB_DEPRECATED
 const NDIlib_v4_5* NDIlib_v4_5_load(void);
 
-// Load the library
-PROCESSINGNDILIB_API
+// Load the library.
+PROCESSINGNDILIB_API PROCESSINGNDILIB_DEPRECATED
 const NDIlib_v4* NDIlib_v4_load(void);
 
-// Load the library
-PROCESSINGNDILIB_API
+// Load the library.
+PROCESSINGNDILIB_API PROCESSINGNDILIB_DEPRECATED
 const NDIlib_v3* NDIlib_v3_load(void);
 
+// Load the library.
 PROCESSINGNDILIB_API PROCESSINGNDILIB_DEPRECATED
 const NDIlib_v2* NDIlib_v2_load(void);
