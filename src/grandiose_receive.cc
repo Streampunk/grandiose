@@ -291,7 +291,8 @@ napi_value receive(napi_env env, napi_callback_info info) {
 void videoReceiveExecute(napi_env env, void* data) {
   dataCarrier* c = (dataCarrier*) data;
 
-  switch (NDIlib_recv_capture_v2(c->recv, &c->videoFrame, nullptr, nullptr, c->wait))
+  auto res = NDIlib_recv_capture_v2(c->recv, &c->videoFrame, nullptr, nullptr, c->wait);
+  switch (res)
   {
     case NDIlib_frame_type_none:
       printf("No data received.\n");
@@ -304,9 +305,15 @@ void videoReceiveExecute(napi_env env, void* data) {
       /* printf("Video data %i received (%dx%d at %d/%d).\n", &c->videoFrame, c->videoFrame.xres, c->videoFrame.yres,
         c->videoFrame.frame_rate_N, c->videoFrame.frame_rate_D); */
       break;
+          
+    case NDIlib_frame_type_error:
+      // printf("Received Error.\n");
+      c->status = GRANDIOSE_NOT_FOUND;
+      c->errorMsg = "Received error instead of video data.";
+      break;
 
     default:
-      printf("Other kind of data received.\n");
+      printf("Other kind of data received (%d).\n", res);
       c->status = GRANDIOSE_NOT_VIDEO;
       c->errorMsg = "Non-video data received on video capture.";
       break;
