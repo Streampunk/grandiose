@@ -51,10 +51,25 @@
             {
               "destination": "build/Release",
               "files": [
-                "lib/mac_x64/libndi.5.dylib"
+                "lib/mac_universal/libndi.dylib"
               ]
             }
           ],
+          "xcode_settings": {
+            "OTHER_CPLUSPLUSFLAGS": [
+              "-std=c++11",
+              "-stdlib=libc++",
+              "-fexceptions"
+            ],
+            "OTHER_LDFLAGS": [
+              "-Wl,-rpath,<@(module_root_dir)/build/Release"
+            ]
+          },
+          "link_settings": {
+            "libraries": [
+              "<(module_root_dir)/build/Release/libndi.dylib"
+            ],
+          }
         }]
       ]
     }
