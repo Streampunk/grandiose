@@ -33,8 +33,8 @@ struct NDIlib_find_instance_type;
 typedef struct NDIlib_find_instance_type* NDIlib_find_instance_t;
 
 // The creation structure that is used when you are creating a finder.
-typedef struct NDIlib_find_create_t
-{	// Do we want to include the list of NDI sources that are running on the local machine? If TRUE then
+typedef struct NDIlib_find_create_t {
+	// Do we want to include the list of NDI sources that are running on the local machine? If TRUE then
 	// local sources will be visible, if FALSE then they will not.
 	bool show_local_sources;
 
@@ -52,7 +52,6 @@ typedef struct NDIlib_find_create_t
 #if NDILIB_CPP_DEFAULT_CONSTRUCTORS
 	NDIlib_find_create_t(bool show_local_sources_ = true, const char* p_groups_ = NULL, const char* p_extra_ips_ = NULL);
 #endif // NDILIB_CPP_DEFAULT_CONSTRUCTORS
-
 } NDIlib_find_create_t;
 
 //***********************************************************************************************************

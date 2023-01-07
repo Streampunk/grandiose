@@ -187,18 +187,18 @@ const char* NDIlib_recv_recording_get_error(NDIlib_recv_instance_t p_instance);
 
 // In order to get the duration.
 typedef struct NDIlib_recv_recording_time_t
-{	// The number of actual video frames recorded.
+{
+	// The number of actual video frames recorded.
 	int64_t no_frames;
 
-	// The starting time and current largest time of the record, in UTC time, at 100ns unit intervals. This
-	// allows you to know the record time irrespective of frame rate. For instance, last_time - start_time
-	// would give you the recording length in 100 ns intervals.
+	// The starting time and current largest time of the record, in UTC time, at 100-nanosecond unit
+	// intervals. This allows you to know the record time irrespective of frame rate. For instance,
+	// last_time - start_time would give you the recording length in 100-nanosecond intervals.
 	int64_t start_time, last_time;
 
 #if NDILIB_CPP_DEFAULT_CONSTRUCTORS
 	NDIlib_recv_recording_time_t(void);
 #endif // NDILIB_CPP_DEFAULT_CONSTRUCTORS
-
 } NDIlib_recv_recording_time_t;
 
 // Get the current recording times.

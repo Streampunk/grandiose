@@ -33,8 +33,8 @@ struct NDIlib_send_instance_type;
 typedef struct NDIlib_send_instance_type* NDIlib_send_instance_t;
 
 // The creation structure that is used when you are creating a sender.
-typedef struct NDIlib_send_create_t
-{	// The name of the NDI source to create. This is a NULL terminated UTF8 string.
+typedef struct NDIlib_send_create_t {
+	// The name of the NDI source to create. This is a NULL terminated UTF8 string.
 	const char* p_ndi_name;
 
 	// What groups should this source be part of. NULL means default.
@@ -48,9 +48,12 @@ typedef struct NDIlib_send_create_t
 	bool clock_video, clock_audio;
 
 #if NDILIB_CPP_DEFAULT_CONSTRUCTORS
-	NDIlib_send_create_t(const char* p_ndi_name_ = NULL, const char* p_groups_ = NULL, bool clock_video_ = true, bool clock_audio_ = true);
+	NDIlib_send_create_t(
+		const char* p_ndi_name_ = NULL,
+		const char* p_groups_ = NULL,
+		bool clock_video_ = true, bool clock_audio_ = true
+	);
 #endif // NDILIB_CPP_DEFAULT_CONSTRUCTORS
-
 } NDIlib_send_create_t;
 
 // Create a new sender instance. This will return NULL if it fails. If you specify leave p_create_settings
@@ -100,7 +103,8 @@ PROCESSINGNDILIB_API
 NDIlib_frame_type_e NDIlib_send_capture(
 	NDIlib_send_instance_t p_instance,   // The instance data.
 	NDIlib_metadata_frame_t* p_metadata, // The metadata received (can be NULL).
-	uint32_t timeout_in_ms);             // The amount of time in milliseconds to wait for data.
+	uint32_t timeout_in_ms               // The amount of time in milliseconds to wait for data.
+);
 
 // Free the buffers returned by capture for metadata.
 PROCESSINGNDILIB_API
