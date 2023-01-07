@@ -29,11 +29,11 @@
         ["OS=='linux'", {
           "link_settings": {
             "libraries": [
-              "<(module_root_dir)/lib/linux_x64/libndi.so.5"
+              "<(module_root_dir)/lib/linux_<@(target_arch)/libndi.so.5"
             ],
             "ldflags": [
-              "-L<@(module_root_dir)/lib/linux_x64",
-              "-Wl,-rpath=\\$$ORIGIN/../../lib/linux_x64",
+              "-L<@(module_root_dir)/lib/linux_<@(target_arch)",
+              "-Wl,-rpath=\\$$ORIGIN/../../lib/linux_<@(target_arch)",
             ]
           },
         }],

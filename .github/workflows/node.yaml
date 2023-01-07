@@ -38,11 +38,11 @@ jobs:
             arch: x64
             is-native: true
           # linux-libc
-          # - os: ubuntu-latest
-          #   arch: arm64
-          #   is-native: false
-          #   docker-arch: linux/arm64
-          #   docker-image: node:16-buster
+          - os: ubuntu-latest
+            arch: arm64
+            is-native: false
+            docker-arch: linux/arm64
+            docker-image: node:16-buster
           # - os: ubuntu-latest
           #   arch: arm
           #   is-native: false
