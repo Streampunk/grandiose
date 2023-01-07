@@ -1,0 +1,150 @@
+name: Prebuild
+
+on:
+  push:
+    # tags:
+    #   - v*
+
+env:
+  NAPI_VERSION: 7
+  BINDING_NAME: grandiose
+
+jobs:
+  build-and-test:
+    name: Build ${{ matrix.arch }} on ${{ matrix.os }} ${{ matrix.libc }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # windows
+          - os: windows-2019
+            arch: x64
+            is-native: true
+            extra-files: "Processing.NDI.Lib.x64.dll"
+          # - os: windows-2019
+          #   arch: ia32
+          #   is-native: false
+          # macos - look into making a universal build
+          - os: macos-11
+            arch: arm64
+            is-native: false
+          - os: macos-11
+            arch: x64
+            is-native: true
+          # linux
+          - os: ubuntu-20.04
+            arch: x64
+            is-native: true
+          # linux-libc
+          # - os: ubuntu-latest
+          #   arch: arm64
+          #   is-native: false
+          #   docker-arch: linux/arm64
+          #   docker-image: node:16-buster
+          # - os: ubuntu-latest
+          #   arch: arm
+          #   is-native: false
+          #   docker-arch: linux/arm/v7
+          #   docker-image: node:16-buster
+          # linux-musl - no musl version of libndi
+          # - os: ubuntu-latest
+          #   arch: x64
+          #   is-native: false
+          #   docker-arch: linux/amd64
+          #   docker-image: node:16-alpine
+          #   libc: musl
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
+      - name: rebuild
+        if: ${{ !matrix.docker-arch }}
+        shell: bash
+        run: |
+          yarn
+
+          if [ -n "${{ matrix.is-native }}" ]; then
+            yarn test
+          fi
+
+          yarn rebuild --arch=${{ matrix.arch }}
+          yarn pkg-prebuilds-copy --baseDir=build/Release \
+            --source=$BINDING_NAME.node \
+            --name=$BINDING_NAME \
+            --strip  \
+            --napi_version=$NAPI_VERSION \
+            --arch=${{ matrix.arch }} \
+            --extra-files=${{ matrix.extra-files }}
+        env:
+          CI: true
+          npm_config_build_from_source: true
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        if: matrix.docker-arch
+      - name: rebuild (in docker)
+        uses: addnab/docker-run-action@v3
+        if: matrix.docker-arch
+        with:
+          image: ${{ matrix.docker-image }}
+          # shell: bash
+          options: --platform=${{ matrix.docker-arch }} -v ${{ github.workspace }}:/work -e CI=1 -e npm_config_build_from_source=1 -e NAPI_VERSION -e BINDING_NAME
+          run: |
+            if command -v apt-get &> /dev/null
+            then
+              echo "deb http://deb.debian.org/debian buster-backports main contrib non-free" | tee -a /etc/apt/sources.list.d/backports.list
+              apt update
+              apt install -y cmake/buster-backports yasm
+            elif command -v apk &> /dev/null
+            then
+              apk update
+              apk add cmake make g++ gcc yasm
+            fi
+
+            cd /work
+
+            yarn
+            yarn test
+
+            yarn pkg-prebuilds-copy --baseDir=build/Release \
+              --source=$BINDING_NAME.node \
+              --name=$BINDING_NAME \
+              --strip \
+              --napi_version=$NAPI_VERSION \
+              --arch=${{ matrix.arch }} \
+              --libc=${{ matrix.libc }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ runner.os }}-${{ matrix.arch }}-${{ matrix.libc }}-prebuilds
+          path: prebuilds
+          retention-days: 1
+
+  bundle:
+    name: Bundle prebuilds
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          path: tmp
+
+      - name: Display structure of downloaded files
+        run: |
+          mkdir prebuilds
+          mv tmp/*/* prebuilds/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: all-prebuilds
+          path: prebuilds
+          retention-days: 7

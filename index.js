@@ -13,7 +13,10 @@
   limitations under the License.
 */
 
-const addon = require('bindings')('grandiose');
+const addon = require("pkg-prebuilds")(
+  __dirname,
+  require("./binding-options")
+);
 
 // TODO: reenable segfault-handler when the NDI lib is fixed
 // const SegfaultHandler = require('segfault-handler');

@@ -12,6 +12,7 @@
       "include_dirs": [ "include" ],
       "conditions":[
         ["OS=='win'", {
+          # windows can't do rpath, so needs to be copied next to the .node file
           "copies":[
             {
               "destination": "build/Release",
@@ -26,35 +27,17 @@
           },
         }],
         ["OS=='linux'", {
-          "copies":[
-            {
-              "destination": "build/Release",
-              "files": [
-                "lib/linux_x64/libndi.so",
-                "lib/linux_x64/libndi.so.5",
-                "lib/linux_x64/libndi.so.5.1.1",
-              ]
-            }
-          ],
           "link_settings": {
             "libraries": [
-              "<(module_root_dir)/build/Release/libndi.so.5"
+              "<(module_root_dir)/lib/linux_x64/libndi.so.5"
             ],
             "ldflags": [
-              "-L<@(module_root_dir)/build/Release",
-              "-Wl,-rpath,<@(module_root_dir)/build/Release"
+              "-L<@(module_root_dir)/lib/linux_x64",
+              "-Wl,-rpath=\\$$ORIGIN/../../lib/linux_x64",
             ]
           },
         }],
         ["OS=='mac'", {
-          "copies":[
-            {
-              "destination": "build/Release",
-              "files": [
-                "lib/mac_universal/libndi.dylib"
-              ]
-            }
-          ],
           "xcode_settings": {
             "OTHER_CPLUSPLUSFLAGS": [
               "-std=c++11",
@@ -62,12 +45,12 @@
               "-fexceptions"
             ],
             "OTHER_LDFLAGS": [
-              "-Wl,-rpath,<@(module_root_dir)/build/Release"
+              "-Wl,-rpath,@loader_path/../../lib/mac_universal"
             ]
           },
           "link_settings": {
             "libraries": [
-              "<(module_root_dir)/build/Release/libndi.dylib"
+              "<(module_root_dir)/lib/mac_universal/libndi.dylib"
             ],
           }
         }]
