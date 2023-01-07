@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <chrono>
 #include <string>
+#include <cstddef>
 #include <Processing.NDI.Lib.h>
 #include "grandiose_util.h"
 #include "node_api.h"
@@ -44,8 +45,8 @@ napi_status checkStatus(napi_env env, napi_status status,
   }
 
   char errorCode[20];
-  throwStatus = napi_throw_error(env,
-    itoa(errorInfo->error_code, errorCode, 10), errorInfo->error_message);
+  sprintf(errorCode, "%d", errorInfo->error_code);
+  throwStatus = napi_throw_error(env, errorCode, errorInfo->error_message);
   assert(throwStatus == napi_ok);
 
   return napi_pending_exception; // Expect to be cast to void
@@ -131,8 +132,8 @@ int32_t rejectStatus(napi_env env, carrier* c, char* file, int32_t line) {
     }
     char* extMsg = (char *) malloc(sizeof(char) * c->errorMsg.length() + 200);
     sprintf(extMsg, "In file %s on line %i, found error: %s", file, line, c->errorMsg.c_str());
-    status = napi_create_string_utf8(env, itoa(c->status, errorChars, 10),
-      NAPI_AUTO_LENGTH, &errorCode);
+    sprintf(errorChars, "%d", c->status);
+    status = napi_create_string_utf8(env, errorChars, NAPI_AUTO_LENGTH, &errorCode);
     FLOATING_STATUS;
     status = napi_create_string_utf8(env, extMsg, NAPI_AUTO_LENGTH, &errorMsg);
     FLOATING_STATUS;

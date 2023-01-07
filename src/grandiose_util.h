@@ -19,6 +19,7 @@
 #include <chrono>
 #include <stdio.h>
 #include <string>
+#include <cstddef>
 #include <Processing.NDI.Lib.h>
 #include "node_api.h"
 
@@ -61,6 +62,7 @@ napi_status checkArgs(napi_env env, napi_callback_info info, char* methodName,
 #define GRANDIOSE_BUILD_ERROR 4099
 #define GRANDIOSE_ALLOCATION_FAILURE 4100
 #define GRANDIOSE_RECEIVE_CREATE_FAIL 4101
+#define GRANDIOSE_SEND_CREATE_FAIL 4102
 #define GRANDIOSE_NOT_FOUND 4040
 #define GRANDIOSE_NOT_VIDEO 4140
 #define GRANDIOSE_NOT_AUDIO 4141

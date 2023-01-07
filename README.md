@@ -9,7 +9,7 @@ NDI(tm) is a realisation of a grand vision for what IP media streams should and 
 
 ## Installation
 
-Grandiose only supports Windows x64 platforms at this time. Future platforms may be added in the future.
+Grandiose supports Windows (x64), MacOS (x64 & arm64) as well as Linux (x64 only). Additional platforms may be added in the future.
 
 Install [Node.js](http://nodejs.org/) for your platform. This software has been developed against the long term stable (LTS) release.
 
@@ -238,7 +238,7 @@ Apart from the exceptions in the following section, this software is released un
 The software uses libraries provided under a royalty-free license from NewTek, Inc..
 
 * The `include` files are licensed separately by a NewTek under the MIT license.
-* The DLL and library are provided for convenience of installation and are covered by the NewTek license contained in the `lib` folder.
+* The NDI SDK library files are provided for convenience of installation and are covered by the NewTek license contained in the `lib` folder.
 
 ## Trademarks
 

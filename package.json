@@ -28,6 +28,6 @@
     "bindings": "^1.3.0"
   },
   "devDependencies": {
-    "segfault-handler": "^1.0.0"
+    "segfault-handler": "^1.3.0"
   }
 }
