@@ -134,7 +134,7 @@ export function send(params: {
   clockAudio?: boolean
 }): Sender
 
-export function find(params: {
+export function find(params?: {
   // Should sources on the same system be found?
   showLocalSources?: boolean,
   // Show only sources in a named group. May be an array.
