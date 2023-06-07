@@ -134,6 +134,13 @@ export function send(params: {
   clockAudio?: boolean
 }): Sender
 
+/*
+ * The default waitMs is now 0. This is for systems with a discovery service configured. 
+ * If using with a discovery service, only set the waitMs parameter when waiting for
+ * configuration changes. 
+ * If using with mDNS, it can take a second or two for queries to come back. In this
+ * case, the waitMs parameter should be set. 
+ */
 export function find(params: {
   // Should sources on the same system be found?
   showLocalSources?: boolean,
