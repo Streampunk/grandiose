@@ -32,6 +32,17 @@ void findExecute(napi_env env, void* data) {
 
   printf("Wait is %u.\n", c->wait);
 
+  NDIlib_find_create_t find_create;
+  find_create.show_local_sources = false;
+  find_create.p_groups = NULL;
+
+  NDIlib_find_instance_t pFind = NDIlib_find_create_v2(&find_create);
+  if (!pFind) {
+    c->status = GRANDIOSE_ALLOCATION_FAILURE;
+    c->errorMsg = "Failed to create finder.";
+    return;
+  }
+
   bool findStatus = NDIlib_find_wait_for_sources(c->find, c->wait);
   findStatus = NDIlib_find_wait_for_sources(c->find, c->wait);
   printf("Find status is %i.\n", findStatus);
