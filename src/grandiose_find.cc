@@ -30,20 +30,23 @@
 void findExecute(napi_env env, void* data) {
   findCarrier* c = (findCarrier*) data;
 
-  printf("Wait is %u.\n", c->wait);
+  // printf("Wait is %u.\n", c->wait);
+
+  bool findStatus = NDIlib_find_wait_for_sources(c->find, 0);
+  // printf("Find status #1 is %i.\n", findStatus);
 
   // What is known now ... works well with the new discovety service
+
+  c->sources = NDIlib_find_get_current_sources(c->find, &c->no_sources);
   if (c->wait == 0) {
-      c->sources = NDIlib_find_get_current_sources(c->find, &c->no_sources);
       return;  
   }
 
-  bool findStatus = NDIlib_find_wait_for_sources(c->find, c->wait);
   findStatus = NDIlib_find_wait_for_sources(c->find, c->wait);
-  printf("Find status is %i.\n", findStatus);
+  // printf("Find status #2 is %i.\n", findStatus);
 
   c->sources = NDIlib_find_get_current_sources(c->find, &c->no_sources);
-  if (!findStatus) {
+  if (!findStatus && (c->no_sources == 0)) {
     c->status = GRANDIOSE_NOT_FOUND;
     c->errorMsg =
       "Did not find any NDI streams in the given wait time of " +
