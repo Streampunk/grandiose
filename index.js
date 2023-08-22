@@ -17,6 +17,8 @@ const addon = require("pkg-prebuilds")(
   __dirname,
   require("./binding-options")
 );
+const { promisify } = require('util')
+const setTimeoutPromise = promisify(setTimeout)
 
 // TODO: reenable segfault-handler when the NDI lib is fixed
 // const SegfaultHandler = require('segfault-handler');
@@ -55,20 +57,59 @@ const AUDIO_FORMAT_FLOAT_32_INTERLEAVED = 1;
 // Channels stored as channel-interleaved 16-bit integer values
 const AUDIO_FORMAT_INT_16_INTERLEAVED = 2;
 
-let find = function (...args) {
-  if (args.length === 0) return addon.find();
-  if (Array.isArray(args[0].groups)) {
-    args[0].groups = args[0].groups.reduce((x, y) => x + ',' + y);
+class GrandioseFinder{
+  #addon
+
+  constructor(options) {
+    const newOptions = options ? {
+      showLocalSources: options.showLocalSources,
+      groups: Array.isArray(options.groups) ? options.groups.join(','):options.groups,
+      extraIPs: Array.isArray(options.extraIPs) ? options.extraIPs.join(','):options.extraIPs,
+    } : undefined
+    this.#addon = new addon.GrandioseFinder(newOptions)
   }
-  if (Array.isArray(args[0].extraIPs)) {
-    args[0].extraIPs = args[0].extraIPs.reduce((x, y) => x + ',' + y);
+
+  dispose(...args) {
+    return this.#addon.dispose(...args)
   }
-  return addon.find.apply(null, args);
+
+  getCurrentSources(...args) { 
+    return this.#addon.getCurrentSources(...args)
+  }
+}
+
+// API compataibility in a find implemenation
+async function findCompat(options = {}, waitMs = 0) {
+  if (options.showLocalSources === undefined) options.showLocalSources = true
+  const finder = new GrandioseFinder(options)
+
+  if (!waitMs || typeof waitMs !== 'number') waitMs = 10000
+  const maxTime = Date.now() + waitMs
+
+  try {
+    // Until the timeout has been reached
+    while(Date.now() < maxTime) {
+      // Sleep for a short period
+      await setTimeoutPromise(50)
+
+      // Check if any have been found
+      const sources = finder.getCurrentSources()
+      if (sources.length > 0) {
+        return sources
+      }
+    }
+
+    throw new Error('No sources were found')
+
+  } finally {
+    finder.dispose()
+  }
 }
 
 module.exports = {
   version: addon.version,
-  find: find,
+  find: findCompat,
+  GrandioseFinder: GrandioseFinder,
   isSupportedCPU: addon.isSupportedCPU,
   receive: addon.receive,
   send: addon.send,

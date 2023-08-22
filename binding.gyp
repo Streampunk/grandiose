@@ -14,6 +14,9 @@
         "NAPI_DISABLE_CPP_EXCEPTIONS",
         "NODE_ADDON_API_ENABLE_MAYBE"
       ],
+      "cflags": [
+        "-std=c++17"
+      ],
       "conditions":[
         ["OS=='win'", {
           # windows can't do rpath, so needs to be copied next to the .node file

@@ -26,202 +26,128 @@
 
 #include "grandiose_util.h"
 #include "grandiose_find.h"
+#include "util.h"
 
-void findExecute(napi_env env, void* data) {
-  findCarrier* c = (findCarrier*) data;
+std::unique_ptr<Napi::FunctionReference> GrandioseFinder::Initialize(const Napi::Env &env, Napi::Object exports)
+{
+  Napi::HandleScope scope(env);
 
-  printf("Wait is %u.\n", c->wait);
+  Napi::Function func = DefineClass(env, "GrandioseFinder", {
+                                                                InstanceMethod<&GrandioseFinder::Dispose>("dispose", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
 
-  bool findStatus = NDIlib_find_wait_for_sources(c->find, c->wait);
-  findStatus = NDIlib_find_wait_for_sources(c->find, c->wait);
-  printf("Find status is %i.\n", findStatus);
+                                                                InstanceMethod<&GrandioseFinder::GetSources>("getCurrentSources", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
 
-  c->sources = NDIlib_find_get_current_sources(c->find, &c->no_sources);
-  if (!findStatus) {
-    c->status = GRANDIOSE_NOT_FOUND;
-    c->errorMsg =
-      "Did not find any NDI streams in the given wait time of " +
-      std::to_string(c->wait) + "ms.";
-  }
+                                                            });
 
+  // Create a persistent reference to the class constructor
+  std::unique_ptr<Napi::FunctionReference> constructor = std::make_unique<Napi::FunctionReference>();
+  *constructor = Napi::Persistent(func);
+  exports.Set("GrandioseFinder", func);
+
+  return constructor;
 }
 
-void findComplete(napi_env env, napi_status asyncStatus, void* data) {
-  findCarrier* c = (findCarrier*) data;
+GrandioseFinder::GrandioseFinder(const Napi::CallbackInfo &info) : Napi::ObjectWrap<GrandioseFinder>(info)
+{
+  if (info.Length() > 0 && !info[0].IsUndefined() && !info[0].IsNull())
+  {
+    if (!info[0].IsObject())
+    {
+      Napi::Error::New(info.Env(), "Expected an options object").ThrowAsJavaScriptException();
+      return;
+    }
+    Napi::Object rawOptions = info[0].As<Napi::Object>();
 
-  if (asyncStatus != napi_ok) {
-    c->status = asyncStatus;
-    c->errorMsg = "Async finder failed to complete.";
-  }
-  REJECT_STATUS;
+    std::optional<bool> rawShowLocalSources = parseBoolean(info.Env(), rawOptions.Get("showLocalSources"));
+    if (rawShowLocalSources.has_value())
+    {
+      options.showLocalSources = *rawShowLocalSources;
+    }
+    else
+    {
+      Napi::Error::New(info.Env(), "options.showLocalSources must be a boolean").ThrowAsJavaScriptException();
+      return;
+    }
 
-  napi_value result;
-  c->status = napi_create_array(env, &result);
-  REJECT_STATUS;
-  napi_value item;
-  for ( uint32_t i = 0 ; i < c->no_sources; i++ ) {
-    napi_value name, uri;
-    c->status = napi_create_string_utf8(env, c->sources[i].p_ndi_name, NAPI_AUTO_LENGTH, &name);
-    REJECT_STATUS;
-    c->status = napi_create_string_utf8(env, c->sources[i].p_url_address, NAPI_AUTO_LENGTH, &uri);
-    REJECT_STATUS;
-    c->status = napi_create_object(env, &item);
-    REJECT_STATUS;
-    c->status = napi_set_named_property(env, item, "name", name);
-    REJECT_STATUS;
-    c->status = napi_set_named_property(env, item, "urlAddress", uri);
-    REJECT_STATUS;
+    std::optional<std::string> rawGroups = parseString(info.Env(), rawOptions.Get("groups"));
+    if (rawGroups.has_value())
+    {
+      options.groups = *rawGroups;
+    }
+    else
+    {
+      Napi::Error::New(info.Env(), "options.groups must be an array of strings").ThrowAsJavaScriptException();
+      return;
+    }
 
-    c->status = napi_set_element(env, result, i, item);
-    REJECT_STATUS;
-  }
-
-  napi_status status;
-  status = napi_resolve_deferred(env, c->_deferred, result);
-  FLOATING_STATUS;
-
-  tidyCarrier(env, c);
-}
-
-napi_value find(napi_env env, napi_callback_info info) {
-  napi_valuetype type;
-  findCarrier* c = new findCarrier;
-
-  napi_value promise;
-  c-> status = napi_create_promise(env, &c->_deferred, &promise);
-  REJECT_RETURN;
-
-  NDIlib_find_create_t find_create;
-  find_create.show_local_sources = true;
-  find_create.p_groups = nullptr;
-  find_create.p_extra_ips = nullptr;
-
-  size_t argc = 2;
-  napi_value args[2];
-
-  c->status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-  REJECT_RETURN;
-  if (argc >= 1) {
-    c->status = napi_typeof(env, args[0], &type);
-    REJECT_RETURN;
-    if (type == napi_object) {
-      napi_value property;
-      c->status = napi_get_named_property(env, args[0], "showLocalSources", &property);
-      if (c->status == napi_ok) {
-        c->status = napi_typeof(env, property, &type);
-        REJECT_RETURN;
-        if (type == napi_boolean) {
-          c->status = napi_get_value_bool(env, property, &find_create.show_local_sources);
-          REJECT_RETURN;
-        }
-      } // status == napi_ok for showLocalSources
-      c->status = napi_get_named_property(env, args[0], "groups", &property);
-      if (c->status == napi_ok) {
-        c->status = napi_typeof(env, property, &type);
-        REJECT_RETURN;
-        switch (type) {
-          case napi_string:
-            size_t len;
-            c->status = napi_get_value_string_utf8(env, property, nullptr, 0, &len);
-            REJECT_RETURN;
-            find_create.p_groups = (const char *) malloc(len + 1);
-            c->status = napi_get_value_string_utf8(env, property,
-              (char *) find_create.p_groups, len + 1, &len);
-            REJECT_RETURN;
-            break;
-          default:
-            break;
-        }
-      } // status == napi_ok for p_groups
-      c->status = napi_get_named_property(env, args[0], "extraIPs", &property);
-      if (c->status == napi_ok) {
-        c->status = napi_typeof(env, property, &type);
-        REJECT_RETURN;
-        switch (type) {
-          case napi_string:
-            size_t len;
-            c->status =  napi_get_value_string_utf8(env, property, nullptr, 0, &len);
-            REJECT_RETURN;
-            find_create.p_extra_ips = (const char *) malloc(len + 1);
-            c->status = napi_get_value_string_utf8(env, property,
-              (char *) find_create.p_extra_ips, len + 1, &len);
-            REJECT_RETURN;
-            break;
-          default:
-            break;
-        }
-      }
-
-    } // type == napi_object
-  } // argc >= 1
-
-  if (argc >= 2) {
-    c->status = napi_typeof(env, args[1], &type);
-    REJECT_RETURN;
-    if (type == napi_number) {
-      c->status = napi_get_value_uint32(env, args[1], &c->wait);
-      REJECT_RETURN;
+    std::optional<std::string> rawExtraIps = parseString(info.Env(), rawOptions.Get("extraIPs"));
+    if (rawExtraIps.has_value())
+    {
+      options.extraIPs = *rawExtraIps;
+    }
+    else
+    {
+      Napi::Error::New(info.Env(), "options.extraIPs must be an array of strings").ThrowAsJavaScriptException();
+      return;
     }
   }
 
-  c->find = NDIlib_find_create_v2(&find_create);
-  if (!c->find) REJECT_ERROR_RETURN("Failed to create NDI find instance.", GRANDIOSE_INVALID_ARGS);
+  NDIlib_find_create_t find_create;
+  find_create.show_local_sources = options.showLocalSources;
+  find_create.p_groups = options.groups.length() > 0 ? options.groups.c_str() : nullptr;
+  find_create.p_extra_ips = options.extraIPs.length() > 0 ? options.extraIPs.c_str() : nullptr;
 
-  napi_value resource_name;
-  c->status = napi_create_string_utf8(env, "Find", NAPI_AUTO_LENGTH, &resource_name);
-  REJECT_RETURN;
-  c->status = napi_create_async_work(env, NULL, resource_name, findExecute,
-    findComplete, c, &c->_request);
-  REJECT_RETURN;
-  c->status = napi_queue_async_work(env, c->_request);
-  REJECT_RETURN;
-
-  return promise;
+  handle = NDIlib_find_create2(&find_create);
+  if (!handle)
+  {
+    Napi::Error::New(info.Env(), "Failed to initialize NDI finder").ThrowAsJavaScriptException();
+    return;
+  }
 }
 
-// Make a native source object from components of a source object
-napi_status makeNativeSource(napi_env env, napi_value source, NDIlib_source_t *result) {
-  const char* name = nullptr;
-  const char* url = nullptr;
-  napi_status status;
-  napi_valuetype type;
-  napi_value namev, urlv;
-  size_t namel, urll;
-
-  status = napi_get_named_property(env, source, "name", &namev);
-  PASS_STATUS;
-  status = napi_get_named_property(env, source, "urlAddress", &urlv);
-  PASS_STATUS;
-
-  status = napi_typeof(env, namev, &type);
-  PASS_STATUS;
-  if (type == napi_string) {
-    status = napi_get_value_string_utf8(env, namev, nullptr, 0, &namel);
-    PASS_STATUS;
-    name = (char *) malloc(namel + 1);
-    status = napi_get_value_string_utf8(env, namev, (char*) name, namel + 1, &namel);
-    PASS_STATUS;
-  }
-
-  status = napi_typeof(env, urlv, &type);
-  PASS_STATUS;
-  if (type == napi_string) {
-    status = napi_get_value_string_utf8(env, urlv, nullptr, 0, &urll);
-    PASS_STATUS;
-    url = (char *) malloc(urll + 1);
-    status = napi_get_value_string_utf8(env, urlv, (char*) url, urll + 1, &urll);
-    PASS_STATUS;
-  }
-
-  result->p_ndi_name = name;
-  result->p_url_address = url;
-  return napi_ok;
+GrandioseFinder::~GrandioseFinder()
+{
+  cleanup();
 }
 
-/* makeNativeSource usage example
-NDIlib_source_t* fred = new NDIlib_source_t();
-c->status = makeNativeSource(env, item, fred);
-REJECT_STATUS;
-printf("I made name=%s and urlAddress=%s\n", fred->p_ndi_name, fred->p_url_address);
-delete fred;
-*/
+void GrandioseFinder::cleanup()
+{
+  if (handle != nullptr)
+  {
+    NDIlib_find_destroy(handle);
+    handle = nullptr;
+  }
+}
+
+Napi::Value GrandioseFinder::Dispose(const Napi::CallbackInfo &info)
+{
+  cleanup();
+
+  return info.Env().Null();
+}
+
+Napi::Value GrandioseFinder::GetSources(const Napi::CallbackInfo &info)
+{
+  Napi::Env env = info.Env();
+
+  if (!handle)
+  {
+    Napi::Error::New(info.Env(), "GrandioseFinder has been disposed").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  uint32_t count = 0;
+  const NDIlib_source_t *sources = NDIlib_find_get_current_sources(handle, &count);
+
+  if (!sources || count == 0)
+    return Napi::Array::New(env, 0);
+
+  Napi::Array result = Napi::Array::New(env, count);
+  for (size_t i = 0; i < count; i++)
+  {
+    const NDIlib_source_t &source = sources[i];
+    result[i] = convertSourceToNapi(env, source);
+  }
+
+  return result;
+}

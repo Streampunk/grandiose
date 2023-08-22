@@ -54,6 +54,7 @@ export interface Sender {
 export interface Source {
   name: string
   urlAddress?: string
+  ipAddress?: string
 }
 
 export const enum FrameType {
@@ -134,12 +135,34 @@ export function send(params: {
   clockAudio?: boolean
 }): Sender
 
-export function find(params: {
+/** @deprecated use GrandioseFinder instead */
+export function find(params: GrandioseFinderOptions, waitMs?: number): Promise<Array<Source>>
+
+export interface GrandioseFinderOptions {
   // Should sources on the same system be found?
   showLocalSources?: boolean,
-  // Show only sources in a named group. May be an array.
-  groups?: string | string[],
+  // Show only sources in the named groups
+  groups?: string[] | string,
   // Specific IP addresses or machine names to check
   // These are possibly on a different VLAN and not visible over MDNS
   extraIPs?: string[]
-}, waitMs?: number): Promise<Array<Source>>
+}
+
+/**
+ * An instance of the NDI source finder.
+ * This will monitor for sources in the background, and you can poll it for the current list at useful times.
+ */
+export class GrandioseFinder{
+  constructor(options?: GrandioseFinderOptions)
+
+  /** 
+   * Dispose of the finder once you are finished with it
+   * Failing to do so will block the application from terminating 
+   */
+  dispose(): void
+
+  /**
+   * Get the list of currently known Sources
+   */
+  getCurrentSources(): Array<Source>
+}

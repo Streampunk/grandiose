@@ -30,7 +30,7 @@
 #include "grandiose_find.h"
 #include "grandiose_send.h"
 #include "grandiose_receive.h"
-#include "node_api.h"
+#include "napi.h"
 
 Napi::Value version(const Napi::CallbackInfo &info)
 {
@@ -43,17 +43,36 @@ Napi::Value isSupportedCPU(const Napi::CallbackInfo &info)
   return Napi::Boolean::New(info.Env(), NDIlib_is_supported_CPU());
 }
 
+struct GrandioseInstanceData
+{
+  std::unique_ptr<Napi::FunctionReference> finder;
+};
+
 Napi::Object Init(Napi::Env env, Napi::Object exports)
 {
+
+  // Not required, but "correct" (see the SDK documentation).
+  if (!NDIlib_initialize()) // TODO - throw in a way that users can catch
+    return exports;
+
   napi_status status;
   napi_property_descriptor desc[] = {
-      DECLARE_NAPI_METHOD("find", find),
       DECLARE_NAPI_METHOD("send", send),
       DECLARE_NAPI_METHOD("receive", receive)};
-  status = napi_define_properties(env, exports, 3, desc);
+  status = napi_define_properties(env, exports, 2, desc);
 
   exports.Set("version", Napi::Function::New(env, version));
   exports.Set("isSupportedCPU", Napi::Function::New(env, isSupportedCPU));
+
+  auto finderRef = GrandioseFinder::Initialize(env, exports);
+
+  // Store the constructor as the add-on instance data. This will allow this
+  // add-on to support multiple instances of itself running on multiple worker
+  // threads, as well as multiple instances of itself running in different
+  // contexts on the same thread.
+  env.SetInstanceData<GrandioseInstanceData>(new GrandioseInstanceData{
+      std::move(finderRef),
+  });
 
   return exports;
 }

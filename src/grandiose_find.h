@@ -13,28 +13,36 @@
   limitations under the License.
 */
 
-#ifndef GRANDIOSE_FIND_H
-#define GRANDIOSE_FIND_H
+#pragma once
 
-#include "node_api.h"
+#include "napi.h"
 #include "grandiose_util.h"
 #include <cstddef>
 #include <Processing.NDI.Lib.h>
 
-napi_value find(napi_env env, napi_callback_info info);
-napi_status makeNativeSource(napi_env env, napi_value source, NDIlib_source_t *result);
-
-struct findCarrier : carrier {
-  uint32_t wait = 10000;
-  NDIlib_find_instance_t find = nullptr;
-  uint32_t no_sources = 0;
-  const NDIlib_source_t* sources;
-  ~findCarrier() {
-    if (find != nullptr) {
-      printf("Destroying find carrier.\n");
-      NDIlib_find_destroy(find);
-    }
-  };
+struct GrandioseFinderOptions
+{
+  bool showLocalSources;
+  std::string groups;
+  std::string extraIPs;
 };
 
-#endif /* GRANDIOSE_FIND_H */
+class GrandioseFinder : public Napi::ObjectWrap<GrandioseFinder>
+{
+public:
+  GrandioseFinder(const Napi::CallbackInfo &info);
+  static std::unique_ptr<Napi::FunctionReference> Initialize(const Napi::Env &env, Napi::Object exports);
+
+  ~GrandioseFinder();
+
+private:
+  // Napi::Value GetProperties(const Napi::CallbackInfo &info);
+  Napi::Value Dispose(const Napi::CallbackInfo &info);
+
+  Napi::Value GetSources(const Napi::CallbackInfo &info);
+
+  void cleanup();
+
+  NDIlib_find_instance_t handle = nullptr;
+  GrandioseFinderOptions options;
+};
