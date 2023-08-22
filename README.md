@@ -28,11 +28,13 @@ Grandiose is designed to be `require`d to use from your own application to provi
 A list of all currently available NDI(tm) sources available on the current local area network (or VLAN) can be retrieved. For example, to print a list of sources to the console, try:
 
 ```javascript
-const grandiose = require('grandiose');
+const { GrandioseFinder } = require('grandiose');
 
-grandiose.find()
-  .then(console.log)
-  .catch(console.error);
+const finder = new GrandioseFinder()
+setTimeout(() => {
+  // Log the discovered sources after 1000ms wait
+  console.log(finder.getCurrentSources())
+}, 1000)
 ```
 
 The result is an array, for example here are some local sources to machine :
@@ -46,9 +48,9 @@ The result is an array, for example here are some local sources to machine :
     urlAddress: '169.254.82.1:5963' } ]
 ```
 
-The find operation can be configured with an options object and a wait time in measured in milliseconds:
+The finder can be configured with an options object and a wait time in measured in milliseconds:
 
-    grandiose.find(<opts>, <wait_time>);
+    new GrandioseFinder(<opts>);
 
 The options are as follows:
 
