@@ -49,7 +49,7 @@
           "xcode_settings": {
             "GCC_SYMBOLS_PRIVATE_EXTERN": "YES", # -fvisibility=hidden
             "OTHER_CPLUSPLUSFLAGS": [
-              "-std=c++11",
+              "-std=c++14",
               "-stdlib=libc++",
               "-fexceptions"
             ],
