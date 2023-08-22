@@ -9,7 +9,11 @@
         "src/grandiose_receive.cc",
         "src/grandiose.cc"
       ],
-      "include_dirs": [ "include" ],
+      "include_dirs": [ "include", "<!(node -p \"require('node-addon-api').include_dir\")" ],
+      "defines": [
+        "NAPI_DISABLE_CPP_EXCEPTIONS",
+        "NODE_ADDON_API_ENABLE_MAYBE"
+      ],
       "conditions":[
         ["OS=='win'", {
           # windows can't do rpath, so needs to be copied next to the .node file
@@ -38,7 +42,9 @@
           },
         }],
         ["OS=='mac'", {
+          "cflags+": ["-fvisibility=hidden"],
           "xcode_settings": {
+            "GCC_SYMBOLS_PRIVATE_EXTERN": "YES", # -fvisibility=hidden
             "OTHER_CPLUSPLUSFLAGS": [
               "-std=c++11",
               "-stdlib=libc++",

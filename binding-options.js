@@ -1,4 +1,4 @@
 module.exports = {
   name: 'grandiose',
-  napi_versions: [7],
+  napi_versions: [8],
 }
