@@ -31,6 +31,7 @@
           },
         }],
         ["OS=='linux'", {
+          "cflags": ["-Wno-write-strings"],
           "link_settings": {
             "libraries": [
               "<(module_root_dir)/lib/linux_x64/libndi.so.5"
