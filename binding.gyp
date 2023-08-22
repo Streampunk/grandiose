@@ -14,9 +14,6 @@
         "NAPI_DISABLE_CPP_EXCEPTIONS",
         "NODE_ADDON_API_ENABLE_MAYBE"
       ],
-      "cflags": [
-        "-std=c++17"
-      ],
       "conditions":[
         ["OS=='win'", {
           # windows can't do rpath, so needs to be copied next to the .node file
@@ -34,7 +31,9 @@
           },
         }],
         ["OS=='linux'", {
-          "cflags": ["-Wno-write-strings"],
+          "cflags": [
+            "-Wno-write-strings" # temporary, until all the C style code is replaced
+          ],
           "link_settings": {
             "libraries": [
               "<(module_root_dir)/lib/linux_x64/libndi.so.5"

@@ -1,30 +1,39 @@
 #pragma once
 
-#include <optional>
 #include "napi.h"
 
-std::optional<bool> parseBoolean(const Napi::Env &env, const Napi::Maybe<Napi::Value> &value)
+// TODO: It would be really nice to use std::optional here, but it is not widely enough supported yet to make that viable
+
+bool parseBoolean(const Napi::Env &env, const Napi::Maybe<Napi::Value> &value, bool &output)
 {
     Napi::Value rawValue = value.UnwrapOr(env.Null());
     if (rawValue.IsUndefined() || rawValue.IsNull())
-        return false;
+    {
+        output = false;
+        return true;
+    }
 
     if (!rawValue.IsBoolean())
-        return {};
+        return false;
 
-    return rawValue.As<Napi::Boolean>().Value();
+    output = rawValue.As<Napi::Boolean>().Value();
+    return true;
 }
 
-std::optional<std::string> parseString(const Napi::Env &env, const Napi::Maybe<Napi::Value> &value)
+bool parseString(const Napi::Env &env, const Napi::Maybe<Napi::Value> &value, std::string &output)
 {
     Napi::Value rawValue = value.UnwrapOr(env.Null());
     if (rawValue.IsUndefined() || rawValue.IsNull())
-        return "";
+    {
+        output = "";
+        return true;
+    }
 
     if (!rawValue.IsString())
-        return {};
+        return false;
 
-    return rawValue.As<Napi::String>().Utf8Value();
+    output = rawValue.As<Napi::String>().Utf8Value();
+    return true;
 }
 
 // std::optional<std::vector<std::string>> parseStringArray(const Napi::Env &env, const Napi::Maybe<Napi::Value> &value)

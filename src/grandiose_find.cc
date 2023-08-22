@@ -58,10 +58,10 @@ GrandioseFinder::GrandioseFinder(const Napi::CallbackInfo &info) : Napi::ObjectW
     }
     Napi::Object rawOptions = info[0].As<Napi::Object>();
 
-    std::optional<bool> rawShowLocalSources = parseBoolean(info.Env(), rawOptions.Get("showLocalSources"));
-    if (rawShowLocalSources.has_value())
+    bool rawShowLocalSources = false;
+    if (parseBoolean(info.Env(), rawOptions.Get("showLocalSources"), rawShowLocalSources))
     {
-      options.showLocalSources = *rawShowLocalSources;
+      options.showLocalSources = rawShowLocalSources;
     }
     else
     {
@@ -69,10 +69,10 @@ GrandioseFinder::GrandioseFinder(const Napi::CallbackInfo &info) : Napi::ObjectW
       return;
     }
 
-    std::optional<std::string> rawGroups = parseString(info.Env(), rawOptions.Get("groups"));
-    if (rawGroups.has_value())
+    std::string rawGroups = "";
+    if (parseString(info.Env(), rawOptions.Get("groups"), rawGroups))
     {
-      options.groups = *rawGroups;
+      options.groups = rawGroups;
     }
     else
     {
@@ -80,10 +80,10 @@ GrandioseFinder::GrandioseFinder(const Napi::CallbackInfo &info) : Napi::ObjectW
       return;
     }
 
-    std::optional<std::string> rawExtraIps = parseString(info.Env(), rawOptions.Get("extraIPs"));
-    if (rawExtraIps.has_value())
+    std::string rawExtraIps = "";
+    if (parseString(info.Env(), rawOptions.Get("extraIPs"), rawExtraIps))
     {
-      options.extraIPs = *rawExtraIps;
+      options.extraIPs = rawExtraIps;
     }
     else
     {
