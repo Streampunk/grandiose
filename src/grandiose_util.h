@@ -84,7 +84,7 @@ struct carrier {
 };
 
 void tidyCarrier(napi_env env, carrier* c);
-int32_t rejectStatus(napi_env env, carrier* c, char* file, int32_t line);
+int32_t rejectStatus(napi_env env, carrier* c, const char* file, int32_t line);
 
 #define REJECT_STATUS if (rejectStatus(env, c, __FILE__, __LINE__) != GRANDIOSE_SUCCESS) return;
 #define REJECT_RETURN if (rejectStatus(env, c, __FILE__, __LINE__) != GRANDIOSE_SUCCESS) return promise;

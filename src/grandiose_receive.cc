@@ -725,7 +725,7 @@ void audioReceiveComplete(napi_env env, napi_status asyncStatus, void *data)
 }
 
 napi_value dataAndAudioReceive(napi_env env, napi_callback_info info,
-                               char *resourceName, napi_async_execute_callback execute,
+                               const char *resourceName, napi_async_execute_callback execute,
                                napi_async_complete_callback complete)
 {
   napi_valuetype type;

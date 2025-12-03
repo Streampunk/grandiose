@@ -119,7 +119,7 @@ void tidyCarrier(napi_env env, carrier* c) {
   delete c;
 }
 
-int32_t rejectStatus(napi_env env, carrier* c, char* file, int32_t line) {
+int32_t rejectStatus(napi_env env, carrier* c, const char* file, int32_t line) {
   if (c->status != GRANDIOSE_SUCCESS) {
     napi_value errorValue, errorCode, errorMsg;
     napi_status status;
